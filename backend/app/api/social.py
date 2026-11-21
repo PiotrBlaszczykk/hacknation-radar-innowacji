@@ -74,7 +74,7 @@ def create_interaction(innovation_id: int):
     user = _require_user()
     data = json_body()
     kind = data.get("type")
-    if kind not in SOCIAL_TYPES:
+    if kind not in (*SOCIAL_TYPES, "serce"):
         abort(400, "Wybierz poprawny typ interakcji")
 
     body = None
@@ -87,7 +87,7 @@ def create_interaction(innovation_id: int):
 
     # Wspólna blokada serializuje przełączenia także wtedy, gdy wpisu jeszcze nie ma.
     innovation = db.get_or_404(Innovation, innovation_id, with_for_update=True)
-    if kind in TOGGLES:
+    if kind in (*TOGGLES, "serce"):
         removed = db.session.scalar(
             delete(Interaction)
             .where(
@@ -173,3 +173,24 @@ def get_activity():
             for interaction, innovation_id, title in contacts
         ]
     return jsonify(following=activity["obserwuje"], interested=activity["zainteresowany"], contact_requests=contact_requests)
+
+@bp.put("/following/<kind>/<int:target_id>")
+def follow_target(kind, target_id):
+    from sqlalchemy.dialects.postgresql import insert
+    from ..models import Organization, follow
+
+    user = _require_user()
+    if kind not in ("person", "organization"):
+        abort(404)
+    is_person = kind == "person"
+    db.get_or_404(User if is_person else Organization, target_id)
+    active = json_body().get("active")
+    if type(active) is not bool or (is_person and target_id == user.id):
+        abort(400, "Wybierz inny profil i stan obserwacji.")
+    table = follow.people if is_person else follow.organizations
+    if active:
+        db.session.execute(insert(table).values(follower_id=user.id, target_id=target_id).on_conflict_do_nothing())
+    else:
+        db.session.execute(table.delete().where(table.c.follower_id == user.id, table.c.target_id == target_id))
+    db.session.commit()
+    return jsonify(active=active)

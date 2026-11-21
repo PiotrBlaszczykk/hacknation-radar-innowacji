@@ -2,24 +2,24 @@
 version: 1
 slug: "frontend-src-pages-feed-tsx"
 primary_target: "frontend/src/pages/Feed.tsx"
-related_targets: ["frontend/src/pages/InnovationDetail.tsx","frontend/src/pages/Broker.tsx"]
+related_targets: ["frontend/src/components/Layout.tsx","frontend/src/components/InnovationCard.tsx"]
 ---
 
 # Radar
 
 Mode: Operate
-Target: /, /innowacje/:id, /broker
+Target: /
 
 ## Direction contract
 
-**Thesis.** Od opisu potrzeby do karty z dowodem. Broker może przejść od dowodu do decyzji.
+**Thesis.** Użytkownik rozpoznaje wpis po autorze lub instytucji, czyta dowód i może od razu zareagować albo otworzyć kartę.
 
-**Own-world.** Grafit, skondensowane jasne litery, cienkie podziały i ciepły bursztyn. Rytm rejestru widoczny w źródle i stanie sprawy.
+**Own-world.** Czerwony nagłówek, jasna powierzchnia, czarny druk i cienkie linie. Wyraziste liternictwo wyznacza początek strony, a krótkie teksty i akcje tworzą rytm wpisów.
 
-**Story.** Persona identyfikuje kontekst. Użytkownik wpisuje potrzebę albo otwiera wskazane rzeczywiste wdrożenie. Źródło pojawia się przy tytule karty. Kolejka brokera prowadzi do właściwej sekcji szczegółów.
+**Story.** Z wyszukiwarki lub wybranej zakładki użytkownik trafia do wpisów. Widzi pochodzenie, może podbić kartę lub przejść do rozmowy. Przykład #514 pokazuje, jak czytać dowód użycia.
 
-**First viewport.** Wspólny nagłówek z personą. W feedzie pole wyszukiwania po lewej, po prawej wdrożenie #514 z problemem, oryginalnym źródłem, liczbą odwiedzonych mieszkańców i odnośnikiem do karty. Poniżej zaczyna się rejestr wyników z cienkimi podziałami. Na wąskim ekranie ten sam porządek w jednej kolumnie.
+**First viewport.** Nad strumieniem po lewej są nagłówek, wyszukiwarka i widoki feedu. Po prawej widnieje źródłowy przykład użycia i przejście do zapotrzebowań. Na telefonie przykład pojawia się pod wyszukiwarką przed wynikami.
 
-**Form.** seed: none (pinned). „Grafitowe tło, jasny skondensowany krój dużych nagłówków” oraz „rozpoznać wybraną personę, wpisać potrzebę i otworzyć konkretny wynik”.
+**Form.** seed: none (pinned). Kierunek wizualny wynika z dołączonej referencji oraz z prośby „bardziej w tym stylu” i o klimat social medium. Kolejność wyszukiwarka → źródłowy przykład → wpisy na telefonie wynika z zadań istniejącego Radaru i jest decyzją projektu tego ekranu.
 
 **Finish.** unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance

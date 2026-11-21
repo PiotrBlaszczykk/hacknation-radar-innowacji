@@ -1,23 +1,29 @@
 import { ArrowRight, ArrowUpRight } from 'lucide-react'
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   useBrokerBoard, useBrokerDuplicates, useBrokerQueue, useBrokerSummary, useMoveInnovation,
   type BrokerColumn, type QueueItem,
 } from '../api/broker.ts'
 import { useLabel, useMeta } from '../api/hooks.ts'
-import { Badge, Button, Card, ErrorNote, Loading } from '../components/ui.tsx'
+import { Badge, Button, Card, ErrorNote, inputClass, Loading } from '../components/ui.tsx'
 import { usePersona } from '../lib/persona.tsx'
 
 const number = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 1 })
 const percent = new Intl.NumberFormat('pl-PL', { style: 'percent', maximumSignificantDigits: 3 })
+const cases = new Intl.PluralRules('pl-PL')
+const caseLabels = { one: 'sprawa', few: 'sprawy', many: 'spraw', other: 'spraw', zero: 'spraw', two: 'spraw' }
 const titleLink = 'font-semibold text-slate-900 hover:text-brand-700 hover:underline'
 const queueTypes: Record<QueueItem['type'], { label: string; section: string }> = {
-  low_confidence: { label: 'Ocena do przeglądu', section: 'ocena' },
-  path_approval: { label: 'Ścieżka', section: 'sciezka' },
-  match_interest: { label: 'Zainteresowanie', section: 'dopasowania' },
+  contact_request: { label: 'Prośby o kontakt', section: 'prosby-o-kontakt' },
+  match_interest: { label: 'Zainteresowanie organizacji', section: 'dopasowania' },
+  path_approval: { label: 'Decyzje o ścieżce', section: 'sciezka' },
+  missing_evidence: { label: 'Braki w dowodach', section: 'ocena' },
+  low_confidence: { label: 'Niska pewność oceny', section: 'ocena' },
   unclaimed_profile: { label: 'Potwierdzenie profilu', section: 'potwierdzenie-profilu' },
 }
+const queueTypeKeys = Object.keys(queueTypes) as QueueItem['type'][]
+const QUEUE_PAGE_SIZE = 4
 
 function Overview() {
   const { data, error, isPending } = useBrokerSummary()
@@ -152,43 +158,113 @@ function Board() {
 }
 
 function DecisionQueue() {
-  const { data, error, isPending } = useBrokerQueue()
-  const [visible, setVisible] = useState(4)
+  const { persona } = usePersona()
+  const [params, setParams] = useSearchParams()
+  const options = queueTypeKeys.filter((type) => type !== 'contact_request' || persona?.role === 'broker')
+  const selected = options.find((type) => type === params.get('type'))
+  const requested = Number(params.get('page') ?? '1')
+  const page = Number.isSafeInteger(requested) && requested > 0 && requested <= Number.MAX_SAFE_INTEGER / QUEUE_PAGE_SIZE
+    ? requested : 1
+  const offset = (page - 1) * QUEUE_PAGE_SIZE
+  const { data, error, isPending, refetch } = useBrokerQueue(selected, offset, QUEUE_PAGE_SIZE, persona?.id ?? null)
+  const lastPage = data ? Math.max(1, Math.ceil(data.total / QUEUE_PAGE_SIZE)) : undefined
+
+  useEffect(() => {
+    if (lastPage !== undefined && page > lastPage) {
+      setParams((previous) => {
+        const next = new URLSearchParams(previous)
+        if (lastPage === 1) next.delete('page')
+        else next.set('page', String(lastPage))
+        return next
+      }, { replace: true, preventScrollReset: true })
+    }
+  }, [lastPage, page, setParams])
+
+  const changePage = (target: number) => {
+    const next = new URLSearchParams(params)
+    if (target === 1) next.delete('page')
+    else next.set('page', String(target))
+    setParams(next, { preventScrollReset: true })
+    document.getElementById('queue-title')?.focus()
+  }
 
   return (
     <section id="kolejka" aria-labelledby="queue-title" className="min-w-0 scroll-mt-4 space-y-3 lg:scroll-mt-28">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="queue-title" className="section-title">Kolejka decyzji</h2>
-        {data && <span className="text-sm tabular-nums text-slate-600"><strong className="text-lg text-brand-700">{number.format(data.total)}</strong> w kolejce</span>}
+      <h2 id="queue-title" tabIndex={-1} className="section-title">Kolejka decyzji</h2>
+      <div>
+        <label htmlFor="queue-type" className="block text-sm font-medium text-slate-700">Rodzaj sprawy</label>
+        <select id="queue-type" value={selected ?? ''} className={`${inputClass} mt-1`}
+          onChange={(event) => {
+            const next = new URLSearchParams(params)
+            if (event.target.value) next.set('type', event.target.value)
+            else next.delete('type')
+            next.delete('page')
+            setParams(next, { preventScrollReset: true })
+          }}>
+          <option value="">Wszystkie sprawy</option>
+          {options.map((type) => <option key={type} value={type}>{queueTypes[type].label}</option>)}
+        </select>
       </div>
-      <div className="border-y border-slate-200 bg-shell">
+      <p role="status" className="text-sm text-slate-600">
+        {data && !error && (
+          <>
+            <strong className="tabular-nums text-brand-700">{number.format(data.total)}</strong>
+            {` ${caseLabels[cases.select(data.total)]} `}
+            {selected ? `w tym filtrze · ${number.format(data.overall)} w kolejce` : 'w kolejce'}
+            {data.items.length > 0 && (
+              <span className="block tabular-nums">
+                Pozycje {number.format(data.offset + 1)}–{number.format(data.offset + data.items.length)}
+              </span>
+            )}
+          </>
+        )}
+      </p>
+      <div className="border-y border-slate-200 bg-shell" aria-busy={isPending}>
         {isPending && <Loading label="Ładowanie kolejki…" />}
-        {error && <ErrorNote error={error} />}
-        {data?.total === 0 && <p className="p-5 text-sm text-slate-600">Żadna sprawa nie czeka teraz na decyzję.</p>}
-        {data && data.total > 0 && (
-          <ul className="divide-y divide-slate-100">
-            {data.items.slice(0, visible).map((item) => {
+        {error && (
+          <div className="space-y-2 p-4">
+            <ErrorNote error={error} />
+            <Button type="button" variant="secondary" onClick={() => void refetch()}>Spróbuj ponownie</Button>
+          </div>
+        )}
+        {!error && data?.total === 0 && <p className="p-4 text-sm text-slate-600">
+          {selected ? 'Brak otwartych spraw tego rodzaju.' : 'Żadna sprawa nie czeka teraz na decyzję.'}
+        </p>}
+        {!error && data && data.items.length > 0 && (
+          <ul className="divide-y divide-slate-200">
+            {data.items.map((item) => {
               const { label, section } = queueTypes[item.type]
+              const card = `/innowacje/${item.innovation_id}`
               return (
-                <li key={`${item.type}-${item.innovation_id}-${item.match_id ?? ''}`}>
-                  <Link to={`/innowacje/${item.innovation_id}#${section}`}
-                    className="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-slate-50">
-                    <div>
-                      <p className="technical-label text-brand-700">{label}</p>
-                      <p className="mt-1 wrap-anywhere font-semibold text-slate-900">{item.title}</p>
-                      <p className="text-slate-600">{item.description}</p>
-                    </div>
-                    <ArrowUpRight aria-hidden className="size-4 shrink-0 text-brand-700" />
+                <li key={`${item.type}-${item.innovation_id}-${item.interaction_id ?? item.match_id ?? ''}`}
+                  className="space-y-1 px-4 py-3 text-sm">
+                  <p className="font-medium text-brand-700">{label}</p>
+                  <Link to={`${card}#${section}`} className={`${titleLink} flex items-start gap-2`}>
+                    <span className="min-w-0 flex-1 wrap-anywhere">{item.title}</span>
+                    <ArrowUpRight aria-hidden className="mt-1 size-4 shrink-0 text-brand-700" />
                   </Link>
+                  <p className="text-slate-600">{item.description}</p>
+                  <p className="text-slate-700">{item.next_step}</p>
+                  {item.type === 'contact_request' && item.match_id !== null && (
+                    <Link to={`${card}#dopasowania`} className="inline-flex min-h-9 items-center font-semibold text-brand-700 hover:underline">
+                      Przejdź do dopasowania
+                    </Link>
+                  )}
                 </li>
               )
             })}
           </ul>
         )}
-        {data && visible < data.total && (
-          <div className="border-t border-slate-100 p-3">
-            <Button type="button" variant="secondary" onClick={() => setVisible(visible + 8)}>Pokaż kolejne sprawy</Button>
-          </div>
+        {!error && (page > 1 || (lastPage !== undefined && lastPage > 1)) && (
+          <nav aria-label="Strony kolejki" className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 p-3">
+            <Button type="button" variant="secondary" disabled={isPending || page === 1}
+              onClick={() => changePage(page - 1)}>Poprzednia</Button>
+            <span className="text-sm tabular-nums text-slate-600">
+              {page}{lastPage && ` / ${lastPage}`}
+            </span>
+            <Button type="button" variant="secondary" disabled={isPending || lastPage === undefined || page >= lastPage}
+              onClick={() => changePage(page + 1)}>Następna</Button>
+          </nav>
         )}
       </div>
     </section>

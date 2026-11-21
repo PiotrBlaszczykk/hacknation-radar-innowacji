@@ -3,14 +3,14 @@ from sqlalchemy import delete, func, select
 
 from .. import domain
 from ..extensions import db
-from ..feed import ranking, rules
+from ..feed import network, ranking, rules
 from ..models import Innovation, Interaction
 from ..services import llm
 from .common import current_user, json_body, page_args, require_key
 
 bp = Blueprint("feed", __name__)
 
-TABS = {"dla_ciebie", "popularne", "perelki", "najnowsze"}
+TABS = {"dla_ciebie", "popularne", "perelki", "najnowsze", "obserwowani"}
 MAX_ABOUT = 2000
 
 
@@ -54,12 +54,9 @@ def get_feed():
         vector = user.embedding
 
     result = ranking.feed_page(tab, filters, user, vector, query, limit, offset)
+    network.decorate(result["items"], user.id if user else None)
     if tab == "perelki" and result["total"] == 0:
-        has_scores = db.session.scalar(select(select(Innovation.id).where(
-            Innovation.score.is_not(None), Innovation.status != "archiwum",
-        ).exists()))
-        if not has_scores:
-            result["message"] = "Pierwsze perełki pojawią się, gdy innowacje otrzymają oceny potencjału."
+        result["message"] = rules.GEM_EMPTY_IN_SCOPE if len(filters) > 1 else rules.GEM_EMPTY
     if notice:
         result["notice"] = notice
     return jsonify(result)

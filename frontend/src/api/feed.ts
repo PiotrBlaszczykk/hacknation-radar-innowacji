@@ -3,9 +3,9 @@ import { api, query } from './client.ts'
 import type { Innovation, Page, User } from './types.ts'
 
 export const MAX_ABOUT = 2000
-export type FeedTab = 'dla_ciebie' | 'perelki' | 'popularne' | 'najnowsze'
+export type FeedTab = 'dla_ciebie' | 'perelki' | 'popularne' | 'najnowsze' | 'obserwowani'
 export type FeedFilters = Partial<Record<'kind' | 'stage' | 'domain' | 'origin', string>>
-export type Engagement = { bumps: number; bumped: boolean; interest_count: number; comments_count: number }
+export type Engagement = { bumps: number; bumped: boolean; interest_count: number; comments_count: number; likes: number; liked: boolean; comments: {name: string; body: string}[]; repost_by: string | null; follows_author: boolean; follows_org: boolean }
 export type FeedItem = Innovation & Engagement & { why: string }
 type FeedPage = Page<FeedItem> & { message?: string; notice?: string }
 type Explanation = { sections: { title: string; lines: string[] }[] }

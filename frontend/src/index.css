@@ -58,42 +58,42 @@
   --font-sans: 'Source Sans 3', system-ui, sans-serif;
   --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
 
-  --color-canvas: #101113;
-  --color-shell: #151619;
-  --color-surface: #191b1e;
-  --color-control: #6c6e74;
-  --color-ink: #201408;
+  --color-canvas: #f9f8f6;
+  --color-shell: #f1efec;
+  --color-surface: #fff;
+  --color-control: #8d8586;
+  --color-ink: #fff;
 
-  --color-slate-50: #202226;
-  --color-slate-100: #292c30;
-  --color-slate-200: #36393e;
-  --color-slate-300: #6c6e74;
-  --color-slate-400: #909398;
-  --color-slate-500: #a6a9af;
-  --color-slate-600: #b8bbc0;
-  --color-slate-700: #d2d4d7;
-  --color-slate-800: #e3e4e6;
-  --color-slate-900: #f3f2f0;
+  --color-slate-50: #f8f7f5;
+  --color-slate-100: #f1eeeb;
+  --color-slate-200: #ddd7d4;
+  --color-slate-300: #b4abaa;
+  --color-slate-400: #82797b;
+  --color-slate-500: #6b6062;
+  --color-slate-600: #574d50;
+  --color-slate-700: #40373a;
+  --color-slate-800: #2e2729;
+  --color-slate-900: #1b1719;
 
-  --color-brand-50: #30261c;
-  --color-brand-100: #55402b;
-  --color-brand-500: #e09d56;
-  --color-brand-600: #ffbc72;
-  --color-brand-700: #ffc98f;
-  --color-amber-50: #32281c;
-  --color-amber-800: #f2c487;
-  --color-amber-900: #ffd6a1;
-  --color-emerald-50: #1c2c25;
-  --color-emerald-700: #a4d5b9;
-  --color-rose-50: #352326;
-  --color-rose-700: #ffb9bd;
-  --color-violet-50: #262932;
-  --color-violet-700: #c2cee4;
+  --color-brand-50: #fbecef;
+  --color-brand-100: #f4d4dc;
+  --color-brand-500: #ce2748;
+  --color-brand-600: #b31335;
+  --color-brand-700: #921029;
+  --color-amber-50: #fcf2df;
+  --color-amber-800: #794709;
+  --color-amber-900: #653704;
+  --color-emerald-50: #e7f3ec;
+  --color-emerald-700: #275e45;
+  --color-rose-50: #fbe9ed;
+  --color-rose-700: #9d1835;
+  --color-violet-50: #efedf5;
+  --color-violet-700: #52436c;
 }
 
 @layer base {
   html {
-    color-scheme: dark;
+    color-scheme: light;
     scrollbar-color: var(--color-slate-300) var(--color-canvas);
   }
 
@@ -118,8 +118,12 @@
 
 /* Outside the utility layer so the focus outline also covers styled form controls. */
 :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-brand-600);
+  outline: 2px solid var(--focus-outline, var(--color-brand-600));
   outline-offset: 3px;
+}
+
+.masthead {
+  --focus-outline: #fff;
 }
 
 @layer components {

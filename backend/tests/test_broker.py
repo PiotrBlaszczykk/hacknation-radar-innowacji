@@ -69,6 +69,10 @@ def test_queue_and_flags_from_latest_assessment_and_interest(client, app):
     }
     assert all(item["innovation_id"] == innovation.id and item["description"] for item in queue["items"])
     assert next(item for item in queue["items"] if item["type"] == "match_interest")["match_id"] == match.id
+    first = client.get("/api/broker/queue?limit=1").json
+    assert first["items"][0]["match_id"] == match.id and first["total"] == 4
+    interests = client.get("/api/broker/queue?type=match_interest").json
+    assert interests["items"][0]["match_id"] == match.id and interests["total"] == 1
 
     card = client.get("/api/broker/board").get_json()["columns"][0]["items"][0]
     assert card["needs_review"]
@@ -167,3 +171,83 @@ def test_current_review_threshold_is_shared_by_assessment_and_broker(client):
     assert not assessment["ranked"]
     assert client.get("/api/broker/summary").json["assessments"]["low_confidence"] == 1
     assert client.get("/api/broker/queue").json["items"][0]["innovation_id"] == innovation.id
+
+
+def test_queue_pages_count_all_filtered_cases_and_use_latest_assessment(client):
+    innovations = db.session.scalars(select(Innovation).order_by(Innovation.id).limit(5)).all()
+    broker = db.session.scalar(select(User).where(User.role == "broker"))
+    headers = {"X-User-Id": str(broker.id)}
+    missing = {
+        "key": "dowody", "label": "Dowody skuteczności", "score": 2.5, "weight": 20,
+        "missing": True, "question": "Jaki efekt zmierzono?",
+    }
+    for innovation in innovations:
+        innovation.score = 50
+        db.session.add(Assessment(
+            innovation_id=innovation.id, criteria_version=CRITERIA_VERSION, engine="test",
+            total=50, confidence=0.1, items=[missing],
+        ))
+    db.session.flush()
+    confident_enough_to_score = {
+        "key": "wplyw", "label": "Wpływ", "score": 3, "weight": 10, "confidence": 0.1, "missing": False,
+    }
+    db.session.add(Assessment(
+        innovation_id=innovations[-1].id, criteria_version=CRITERIA_VERSION, engine="test",
+        total=60, confidence=0.1, items=[confident_enough_to_score],
+    ))
+    db.session.commit()
+
+    endpoint = "/api/broker/queue?type=missing_evidence&limit=2"
+    first = client.get(endpoint).json
+    second = client.get(endpoint + "&offset=2").json
+    empty = client.get(endpoint + "&offset=100").json
+    assert [page["total"] for page in (first, second, empty)] == [4, 4, 4]
+    assert [item["innovation_id"] for item in first["items"] + second["items"]] == [i.id for i in innovations[:4]]
+    assert first["overall"] == 5 and second["offset"] == 2 and empty["items"] == []
+    assert first["items"][0]["next_step"] == "Zapytaj twórców: Jaki efekt zmierzono?"
+    assert client.get("/api/broker/queue?type=low_confidence").json["items"][0]["description"] == (
+        "Najmniej pewne kryterium to „Wpływ”."
+    )
+    assert client.get("/api/broker/queue?type=inny").status_code == 400
+    assert client.get("/api/broker/queue?limit=500").json["limit"] == 50
+    assert {item["type"] for item in client.get("/api/broker/queue").json["items"]} == {"low_confidence"}
+
+    correction = client.post(
+        f"/api/innovations/{innovations[0].id}/assessment/override", headers=headers,
+        json={"key": "dowody", "score": 3, "justification": "Udokumentowana próba."},
+    )
+    assert correction.status_code == 200
+    assert client.get(endpoint).json["total"] == 3
+    assert client.get("/api/broker/queue?type=low_confidence").json["total"] == 1
+
+
+def test_contact_queue_respects_persona_and_existing_match_decision(client):
+    innovation = db.session.get(Innovation, 2)
+    requester = db.session.scalar(select(User).where(User.role == "poszukujacy"))
+    broker = db.session.scalar(select(User).where(User.role == "broker"))
+    match = Match(innovation_id=innovation.id, organization_id=requester.organization_id, score=0.7)
+    db.session.add_all([match, Interaction(
+        innovation_id=innovation.id, user_id=requester.id, type="kontakt", body="Prywatna wiadomość do twórców",
+    )])
+    db.session.commit()
+    endpoint = "/api/broker/queue?type=contact_request"
+    broker_headers = {"X-User-Id": str(broker.id)}
+    other_headers = {"X-User-Id": str(requester.id)}
+
+    response = client.get(endpoint, headers=broker_headers)
+    assert response.cache_control.no_store
+    assert response.json["total"] == 1
+    assert response.json["items"][0]["match_id"] == match.id
+    assert "Prywatna wiadomość" not in response.get_data(as_text=True)
+    assert client.get(endpoint, headers=other_headers).json["total"] == 0
+    assert client.get(endpoint).json["overall"] == 0
+    social = f"/api/innovations/{innovation.id}/interactions"
+    assert client.get(social, headers=broker_headers).json["contact_requests"]
+    assert not client.get(social, headers=other_headers).json["contact_requests"]
+
+    url = f"/api/matches/{match.id}"
+    assert client.patch(url, headers=other_headers, json={"status": "kontakt"}).status_code == 403
+    assert client.get(endpoint, headers=broker_headers).json["total"] == 1
+    assert client.patch(url, headers=broker_headers, json={"status": "kontakt"}).status_code == 200
+    assert client.get(endpoint, headers=broker_headers).json["total"] == 0
+    assert client.get(social, headers=broker_headers).json["contact_requests"]

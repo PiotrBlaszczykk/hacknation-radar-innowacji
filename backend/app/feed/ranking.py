@@ -1,12 +1,13 @@
 import re
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import and_, case, func, literal, or_, select
+from sqlalchemy import case, cast, func, literal, or_, select, true
+from sqlalchemy.dialects.postgresql import JSONPATH
 from sqlalchemy.orm import joinedload, load_only
 
-from .. import domain
+from .. import domain, scoring
 from ..extensions import db
-from ..models import Innovation, Interaction, User
+from ..models import Assessment, Innovation, Interaction, Organization, User
 from . import rules
 
 I = Innovation
@@ -35,7 +36,7 @@ def interaction_stats(scope, persona_id, now):
     return (
         select(
             Interaction.innovation_id,
-            func.count().label("attention"),
+            func.count().filter(Interaction.type.in_(tuple(rules.POPULAR_WEIGHTS))).label("attention"),
             func.count().filter(Interaction.type == "podbicie").label("bumps"),
             func.count().filter(Interaction.type == "zainteresowany").label("interest_count"),
             func.count().filter(Interaction.type == "komentarz").label("comments_count"),
@@ -142,15 +143,55 @@ def popularne(base, stats):
     return base.where(stats.c.popularity > 0).order_by(stats.c.popularity.desc(), *NEWEST_ORDER)
 
 
-def _radar_pending():
-    return and_(I.origin == "radar", I.claimed.is_(False))
+def _documented_cards():
+    latest = (
+        select(Assessment.criteria_version, Assessment.items)
+        .where(Assessment.innovation_id == I.id)
+        .order_by(Assessment.id.desc()).limit(1)
+        .lateral("latest_assessment")
+    )
+    results = func.btrim(I.results)
+    verified_source = (
+        ((I.source_name == "strony_instytucji") | I.raw.has_key("public_project"))
+        & (func.jsonb_typeof(I.raw["evidence"]) == "string")
+        & (func.btrim(I.raw["evidence"].astext) == results)
+    )
+    cited_trial = func.jsonb_path_exists(
+        latest.c["items"],
+        cast(
+            '$[*] ? (@.key == "dowody").checks[*] '
+            '? (@.key == "proba" && @.status == "confirmed" && @.evidence == $results)',
+            JSONPATH,
+        ),
+        func.jsonb_build_object("results", results),
+    )
+    return (
+        select(I.id, verified_source.is_(True).label("verified_source"))
+        .select_from(I)
+        .join(latest, true())
+        .where(
+            I.status != "archiwum",
+            I.score.is_not(None),
+            latest.c.criteria_version == scoring.CRITERIA_VERSION,
+            I.source_url.op("~*")(r"^https?://[^[:space:]]"),
+            results != "",
+            ~func.coalesce(I.source_name.startswith("przyklad_", autoescape=True), False),
+            ~I.organization.has(Organization.description.contains("Dane przykładowe.")),
+            verified_source | cited_trial,
+        )
+        .cte("documented_cards")
+    )
 
 
 def perelki(base, stats):
+    documented = _documented_cards()
+    comparison_size = select(func.count()).select_from(documented).scalar_subquery()
     attention = func.coalesce(stats.c.attention, 0)
-    rank = I.score - rules.GEM_ATTENTION_PENALTY * attention + case((_radar_pending(), rules.GEM_RADAR_BONUS), else_=0)
-    return base.where(I.score > rules.GEM_SCORE_THRESHOLD, attention <= rules.GEM_MAX_ATTENTION).order_by(
-        rank.desc(), *NEWEST_ORDER,
+    return (
+        base.join(documented, documented.c.id == I.id)
+        .add_columns(documented.c.verified_source)
+        .where(comparison_size >= rules.GEM_MIN_COMPARABLE, attention <= rules.GEM_MAX_ATTENTION)
+        .order_by(attention.asc(), I.score.desc(), *NEWEST_ORDER)
     )
 
 
@@ -196,15 +237,20 @@ def _why_personal(innovation, row, user, query):
     return " ".join(filter(None, (content_reason, other_reason)))
 
 
-def _why_gem(innovation, row):
-    reason = f"Wysoki potencjał ({round(innovation.score)}/100)."
-    if not row["attention"]:
-        return reason + " Wpis nie zebrał jeszcze żadnych interakcji."
-    return reason + f" Liczba dotychczasowych interakcji: {row['attention']}."
+def _why_gem(row):
+    proof = (
+        "Źródło dokumentuje użycie lub wynik zaobserwowany w praktyce"
+        if row["verified_source"] else "Cytat z wyników potwierdza w ocenie przeprowadzoną próbę lub użycie"
+    )
+    return f"{proof}, a liczba publicznych interakcji przy karcie to {row['attention']}."
 
 
 def feed_page(tab, filters, user: User | None, vector, query, limit, offset):
     now = datetime.now(UTC).replace(tzinfo=None)
+    if tab == "obserwowani":
+        from .network import network
+        visible, recent = network(user.id if user else None)
+        filters = [*filters, visible]
     scope = select(I.id).where(*filters).cte("feed_scope")
     stats = interaction_stats(scope, user.id if user else None, now)
     base = _base(scope, stats)
@@ -214,6 +260,9 @@ def feed_page(tab, filters, user: User | None, vector, query, limit, offset):
         ranked = popularne(base, stats)
     elif tab == "perelki":
         ranked = perelki(base, stats)
+    elif tab == "obserwowani":
+        ranked = base.outerjoin(recent, recent.c.innovation_id == I.id).order_by(
+            func.greatest(I.created_at, recent.c.at).desc(), I.id.desc())
     else:
         ranked = najnowsze(base)
 
@@ -241,7 +290,7 @@ def feed_page(tab, filters, user: User | None, vector, query, limit, offset):
             if tab == "dla_ciebie":
                 why = _why_personal(innovation, row, user, query)
             elif tab == "perelki":
-                why = _why_gem(innovation, row)
+                why = _why_gem(row)
             items.append({
                 **innovation.to_dict(), "why": why, "bumps": row["bumps"], "bumped": bool(row["my_bumps"]),
                 "interest_count": row["interest_count"], "comments_count": row["comments_count"],

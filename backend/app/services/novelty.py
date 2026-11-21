@@ -12,7 +12,7 @@ from ..extensions import db
 from ..models import Innovation
 from . import decisions, embeddings, llm
 
-MIN_TEXT_LENGTH = 40
+MIN_TEXT_LENGTH = 30
 CANDIDATE_LIMIT = 12
 MIN_SIMILARITY = 0.48
 VECTOR_BASELINE = 0.45

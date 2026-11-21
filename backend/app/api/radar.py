@@ -56,7 +56,7 @@ def run():
     source = data.get("source")
     if source not in importer.SOURCE_NAMES:
         abort(400, "Wybierz aktywne źródło radaru.")
-    limit = data.get("limit", 20)
+    limit = data.get("limit", 50 if source == SOURCE else 20)
     if type(limit) is not int or not 1 <= limit <= 50:
         abort(400, "Limit musi być liczbą całkowitą od 1 do 50.")
     refresh, cached_only = data.get("refresh", False), data.get("cached_only", False)

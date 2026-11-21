@@ -32,7 +32,7 @@ function SourceCard({ source }: { source: RadarSource }) {
 
       <dl className="grid gap-4 border-y border-slate-200 py-4 text-sm sm:grid-cols-2">
         <div>
-          <dt className="text-slate-600">{source.name === 'crossref' ? 'Karty z powiązaną publikacją' : statistics ? 'Wybrane karty' : 'Wykryte innowacje'}</dt>
+          <dt className="text-slate-600">{source.name === 'crossref' ? 'Karty z powiązaną publikacją' : statistics ? 'Karty zapisane w radarze' : 'Wykryte innowacje'}</dt>
           <dd className="font-display text-3xl leading-tight font-semibold tabular-nums text-slate-900">{countFormat.format(source.count)}</dd>
         </div>
         {statistics && (

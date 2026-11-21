@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ApiError, api, patch } from './client.ts'
+import { ApiError, api, patch, query } from './client.ts'
 import type { Innovation, InnovationFull, Organization } from './types.ts'
 
 type Counts = Record<string, number>
@@ -33,10 +33,14 @@ export type BrokerColumn = { status: string; total: number; items: BrokerCard[] 
 export type QueueItem = {
   innovation_id: number
   title: string
-  type: 'low_confidence' | 'path_approval' | 'match_interest' | 'unclaimed_profile'
+  type: 'contact_request' | 'path_approval' | 'missing_evidence' | 'low_confidence' | 'match_interest' | 'unclaimed_profile'
   description: string
+  next_step: string
   match_id: number | null
+  interaction_id: number | null
 }
+
+type QueuePage = BrokerList<QueueItem> & { overall: number; limit: number; offset: number }
 
 type DuplicateInnovation = Pick<Innovation, 'id' | 'title' | 'organization'>
 type DuplicatePair = {
@@ -55,11 +59,15 @@ export const useBrokerBoard = () =>
     staleTime: 0,
   })
 
-export const useBrokerQueue = () =>
+export const useBrokerQueue = (type: QueueItem['type'] | undefined, offset: number, limit: number, personaId: number | null) =>
   useQuery({
-    queryKey: ['broker', 'queue'],
-    queryFn: () => api<BrokerList<QueueItem>>('/broker/queue'),
+    queryKey: ['broker', 'queue', personaId, type, offset, limit],
+    queryFn: ({ signal }) => api<QueuePage>(`/broker/queue${query({ type, offset, limit })}`, {
+      signal,
+      headers: { 'X-User-Id': personaId?.toString() ?? '' },
+    }),
     staleTime: 0,
+    refetchOnMount: 'always',
   })
 
 export function useBrokerDuplicates() {

@@ -47,7 +47,10 @@ def need_matches(need_id: int):
     need = db.get_or_404(Need, need_id)
     query = active_matches().where(Match.need_id == need_id)
     if need.status != "otwarte":
-        return jsonify(items=[], total=0)
+        return _match_response(
+            db.select(Match).where(Match.need_id == need_id, Match.status != "proponowane"),
+            include_innovation=True,
+        )
     refresh_matches(need_id=need_id)
     db.session.commit()
     return _match_response(query, include_innovation=True)
@@ -72,7 +75,7 @@ def update_match(match_id: int):
 
     if status == match.status:
         return jsonify(match.to_dict())
-    if not (match.factors or {}).get("eligible", True):
+    if (match.need and match.need.status != "otwarte") or not (match.factors or {}).get("eligible", True):
         abort(409, "To dopasowanie nie jest już dostępne")
     if status == "zainteresowanie" and match.status != "proponowane":
         abort(409, "To dopasowanie zostało już rozpatrzone")

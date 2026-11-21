@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { useCreateInnovation, useMeta } from '../api/hooks.ts'
+import { useNeed, type Need } from '../api/matching.ts'
 import type { StructureCard, StructureResult } from '../api/structure.ts'
 import type { InnovationInput } from '../api/types.ts'
 import AiDraft from '../components/AiDraft.tsx'
 import SimilarHints from '../components/SimilarHints.tsx'
-import { Badge, Button, Card, ChipSelect, ErrorNote, Field, cx, inputClass } from '../components/ui.tsx'
+import { Badge, Button, Card, ChipSelect, ErrorNote, Field, Loading, cx, inputClass } from '../components/ui.tsx'
 import { usePersona } from '../lib/persona.tsx'
 
 type DraftField = keyof StructureCard
@@ -23,11 +25,25 @@ const initial: FormState = {
 }
 
 export default function Submit() {
-  const [{ values, edited, draft }, setForm] = useState(initial)
+  const [params] = useSearchParams()
+  const needId = Number(params.get('potrzeba'))
+  const need = useNeed(needId)
+  if (needId > 0 && Number.isSafeInteger(needId) && need.isPending) return <Loading label="Wczytywanie kontekstu potrzeby…" />
+  if (need.isError) return <ErrorNote error={need.error} />
+  return <InnovationForm key={need.data?.id ?? 'new'} need={need.data} />
+}
+
+function InnovationForm({ need }: { need?: Need }) {
+  const [{ values, edited, draft }, setForm] = useState<FormState>(() => need ? {
+    ...initial,
+    values: { ...initial.values, problem: [need.title, need.description].filter(Boolean).join('\n') },
+    edited: new Set(['problem']),
+  } : initial)
   const { data: meta } = useMeta()
   const { persona } = usePersona()
   const create = useCreateInnovation()
   const navigate = useNavigate()
+  const cache = useQueryClient()
 
   const set = <K extends DraftField>(key: K, value: FormValues[K]) =>
     setForm((current) => ({
@@ -55,7 +71,10 @@ export default function Submit() {
   const submit = (event: FormEvent) => {
     event.preventDefault()
     const keywords = [...new Set(values.keywords.split(',').map((value) => value.trim()).filter(Boolean))]
-    create.mutate({ ...values, keywords }, { onSuccess: (created) => navigate(`/innowacje/${created.id}`) })
+    create.mutate({ ...values, keywords }, { onSuccess: (created) => {
+      void cache.invalidateQueries({ queryKey: ['opportunities'] })
+      navigate(`/innowacje/${created.id}`)
+    } })
   }
 
   const missing = (field: DraftField) =>
@@ -100,6 +119,16 @@ export default function Submit() {
           )}
         </div>
 
+        {need && (
+          <p className="text-sm text-slate-700">
+            Proponujesz rozwiązanie dla zgłoszenia{' '}
+            <Link className="font-semibold text-brand-700 underline" to={`/zapotrzebowania?potrzeba=${need.id}`}>
+              {need.title}
+            </Link>
+            . Opis problemu możesz edytować.
+          </p>
+        )}
+
         <AiDraft
           text={values.description ?? ''}
           onTextChange={(description) =>
@@ -132,7 +161,7 @@ export default function Submit() {
         </Field>
         <Field label="Jaki problem rozwiązuje?">
           {note('problem')}
-          <textarea rows={3} value={values.problem ?? ''} onChange={(e) => set('problem', e.target.value)} className={fieldClass('problem')} />
+          <textarea rows={3} aria-label="Jaki problem rozwiązuje?" value={values.problem ?? ''} onChange={(e) => set('problem', e.target.value)} className={fieldClass('problem')} />
         </Field>
         <Field label="Jak działa rozwiązanie?">
           {note('solution')}
@@ -153,7 +182,7 @@ export default function Submit() {
           </Field>
           <Field label="Etap">
             {note('stage')}
-            <select value={values.stage ?? ''} onChange={(e) => set('stage', e.target.value || null)} className={fieldClass('stage')}>
+            <select aria-label="Etap" value={values.stage ?? ''} onChange={(e) => set('stage', e.target.value || null)} className={fieldClass('stage')}>
               <option value="">Wybierz</option>
               {meta?.stages.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
             </select>

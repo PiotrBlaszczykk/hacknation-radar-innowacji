@@ -40,7 +40,7 @@ export default function IdeaCheck() {
             />
           </Field>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="text-xs text-slate-500">Co najmniej 40 znaków</span>
+            <span className="text-xs text-slate-500">Co najmniej {noveltyMinLength} znaków</span>
             <Button type="submit" disabled={text.trim().length < noveltyMinLength || check.isPending}>
               <ScanSearch className="size-4" aria-hidden="true" />
               {check.isPending ? 'Porównuję rozwiązania…' : 'Sprawdź świeżość'}

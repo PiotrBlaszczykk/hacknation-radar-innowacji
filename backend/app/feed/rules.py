@@ -49,10 +49,13 @@ POPULAR_DAYS = 14
 POPULAR_HALF_LIFE_DAYS = 7
 PERSONAL_ACTIVITY_CAP = 6
 
-GEM_SCORE_THRESHOLD = 65
+GEM_MIN_COMPARABLE = 3
 GEM_MAX_ATTENTION = 2
-GEM_ATTENTION_PENALTY = 6
-GEM_RADAR_BONUS = 8
+GEM_EMPTY_IN_SCOPE = "W tym zestawie nie ma mało zauważonych wdrożeń ani prób spełniających kryteria."
+GEM_EMPTY = (
+    f"Potrzeba co najmniej {GEM_MIN_COMPARABLE} udokumentowanych kart z oceną dopuszczoną do rankingu "
+    f"i przynajmniej jednej z najwyżej {GEM_MAX_ATTENTION} publicznymi interakcjami."
+)
 
 
 def explain() -> list[dict]:
@@ -92,9 +95,15 @@ def explain() -> list[dict]:
         {
             "title": "Ukryte perełki",
             "lines": [
-                f"Potencjał powyżej {GEM_SCORE_THRESHOLD}/100 i co najwyżej {GEM_MAX_ATTENTION} interakcje.",
-                f"Zaczynamy od oceny potencjału. Każda interakcja odejmuje {GEM_ATTENTION_PENALTY} pkt, "
-                f"a wpis wykryty przez radar i oczekujący na potwierdzenie zyskuje {GEM_RADAR_BONUS} pkt.",
+                "Porównujemy aktywne, rzeczywiste karty z publicznym źródłem i oceną dopuszczoną do rankingu "
+                "według bieżących kryteriów.",
+                "Wymagamy zweryfikowanej informacji ze źródła albo cytatu z wyników, który w ocenie potwierdza "
+                "przeprowadzoną próbę lub użycie.",
+                f"W całej bazie muszą być co najmniej {GEM_MIN_COMPARABLE} takie karty. "
+                f"Pokazujemy te z najwyżej {GEM_MAX_ATTENTION} publicznymi interakcjami.",
+                "Liczymy podbicia, zainteresowania, komentarze i obserwowania od dodania karty.",
+                "Najpierw pokazujemy karty z mniejszą liczbą interakcji, następnie z wyższą oceną potencjału "
+                "i nowszą datą dodania. Filtry zawężają tę listę.",
             ],
         },
         {

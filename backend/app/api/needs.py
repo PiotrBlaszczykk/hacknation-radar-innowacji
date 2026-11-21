@@ -4,7 +4,7 @@ from sqlalchemy.orm import defer, joinedload
 
 from .. import domain
 from ..extensions import db
-from ..matching import refresh_matches
+from ..matching import lock_matches, refresh_matches
 from ..models import Need
 from ..services import embeddings
 from .common import current_user, json_body, page_args, require_key
@@ -71,3 +71,22 @@ def create_need():
     refresh_matches(need_id=need.id)
     db.session.commit()
     return jsonify(need.to_dict()), 201
+
+
+@bp.patch("/needs/<int:need_id>")
+def close_need(need_id: int):
+    user = current_user()
+    if user is None:
+        abort(401, "Wybierz personę, aby zamknąć zapotrzebowanie")
+    if json_body().get("status") != "zamkniete":
+        abort(400, "Dozwolone jest zamknięcie zapotrzebowania")
+    lock_matches()
+    need = db.get_or_404(Need, need_id, with_for_update=True)
+    if user.role != "broker" and user.organization_id != need.organization_id:
+        abort(403, "Zapotrzebowanie może zamknąć zgłaszająca organizacja lub broker")
+    if need.status == "otwarte":
+        need.status = "zamkniete"
+        db.session.flush()
+        refresh_matches(need_id=need.id)
+    db.session.commit()
+    return jsonify(need.to_dict())

@@ -1,3 +1,4 @@
+from . import follow
 from .assessment import Assessment, Recommendation
 from .innovation import Event, Innovation
 from .matching import Interaction, Match, Need

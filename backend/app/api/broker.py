@@ -1,8 +1,9 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from sqlalchemy import text
 
 from .. import domain, scoring
 from ..extensions import db
+from .common import current_user, page_args, require_key
 
 bp = Blueprint("broker", __name__)
 
@@ -181,24 +182,64 @@ def board():
     return jsonify(columns=list(columns.values()))
 
 
-@bp.get("/broker/queue")
-def queue():
-    rows = _assessment_rows(f"""
+QUEUE_TYPES = {
+    "contact_request": "Przeczytaj prośbę o kontakt.",
+    "match_interest": "Sprawdź dopasowanie i zdecyduj, czy połączyć strony.",
+    "path_approval": "Zatwierdź lub wybierz inną ścieżkę.",
+    "missing_evidence": "Poproś twórców o brakujące informacje.",
+    "low_confidence": "Sprawdź uzasadnienie oceny i w razie potrzeby popraw kryterium.",
+    "unclaimed_profile": "Poproś twórców o potwierdzenie profilu.",
+}
+
+CONTACT_REQUESTS = """
+    UNION ALL
+    SELECT c.innovation_id, 'contact_request',
+           coalesce(o.name, 'Użytkownik radaru') || ' prosi o kontakt z twórcami.',
+           candidate.id, 0, c.id, NULL
+    FROM interactions c
+    JOIN users u ON u.id = c.user_id
+    LEFT JOIN organizations o ON o.id = u.organization_id
+    LEFT JOIN LATERAL (
+        SELECT m.id
+        FROM matches m LEFT JOIN needs n ON n.id = m.need_id
+        WHERE m.innovation_id = c.innovation_id
+          AND coalesce(m.organization_id, n.organization_id) = u.organization_id
+          AND m.status IN ('zainteresowanie', 'proponowane')
+          AND (m.factors->>'eligible')::boolean IS NOT FALSE
+        ORDER BY (m.status = 'zainteresowanie') DESC, m.score DESC, m.id
+        LIMIT 1
+    ) candidate ON true
+    WHERE c.type = 'kontakt'
+      AND NOT EXISTS (
+          SELECT 1 FROM events e
+          WHERE e.innovation_id = c.innovation_id AND e.type = 'dopasowanie'
+            AND e.created_at >= c.created_at
+            AND e.payload @> jsonb_build_object('organization_id', u.organization_id)
+            AND e.payload->>'to' IN ('kontakt', 'odrzucone')
+      )
+"""
+
+
+def _queue_source(show_contacts: bool) -> str:
+    return f"""
         WITH latest AS ({LATEST_ASSESSMENTS}),
         proposed AS (
-            SELECT DISTINCT ON (innovation_id) innovation_id, id
+            SELECT DISTINCT ON (innovation_id) innovation_id, id, path
             FROM recommendations
             ORDER BY innovation_id, created_at DESC, id DESC
         ),
         pending AS (
-            SELECT innovation_id, 'low_confidence' AS type,
+            SELECT innovation_id,
+                   CASE WHEN has_missing AND NOT :legacy THEN 'missing_evidence'
+                        ELSE 'low_confidence' END AS type,
                    CASE WHEN has_missing THEN 'W karcie brakuje danych do części lub całości oceny.'
                    ELSE 'Model nie rozstrzygnął przesłanek z wystarczającą pewnością.' END AS description,
-                   NULL::integer AS match_id, 2 AS priority
+                   NULL::integer AS match_id, 2 AS priority, NULL::integer AS interaction_id,
+                   NULL::text AS path
             FROM latest WHERE low_confidence OR has_missing
             UNION ALL
             SELECT r.innovation_id, 'path_approval',
-                   'Proponowana ścieżka czeka na zatwierdzenie.', NULL, 1
+                   'Proponowana ścieżka czeka na zatwierdzenie.', NULL, 1, NULL, r.path
             FROM proposed r
             WHERE NOT EXISTS (
                 SELECT 1 FROM events e
@@ -208,20 +249,98 @@ def queue():
             UNION ALL
             SELECT m.innovation_id, 'match_interest',
                    coalesce(o.name, 'Dopasowana organizacja') || ' zgłasza zainteresowanie i czeka na kontakt.',
-                   m.id, 0
+                   m.id, 0, NULL, NULL
             FROM matches m
             LEFT JOIN needs n ON n.id = m.need_id
             LEFT JOIN organizations o ON o.id = coalesce(m.organization_id, n.organization_id)
             WHERE m.status = 'zainteresowanie'
+              AND (:legacy OR (m.factors->>'eligible')::boolean IS NOT FALSE)
             UNION ALL
             SELECT id, 'unclaimed_profile',
-                   'Wysoko oceniony profil z radaru czeka na potwierdzenie przez twórcę.', NULL, 3
+                   'Wysoko oceniony profil z radaru czeka na potwierdzenie przez twórcę.', NULL, 3, NULL, NULL
             FROM innovations WHERE origin = 'radar' AND NOT claimed AND score >= :high_score
+            {CONTACT_REQUESTS if show_contacts else ''}
+        ),
+        active AS (
+            SELECT p.*, i.title, i.score
+            FROM pending p JOIN innovations i ON i.id = p.innovation_id
+            WHERE i.status <> 'archiwum'
         )
-        SELECT p.innovation_id, i.title, p.type, p.description, p.match_id
-        FROM pending p JOIN innovations i ON i.id = p.innovation_id
-        WHERE i.status <> 'archiwum'
-        ORDER BY p.priority, i.score DESC NULLS LAST, i.id, p.match_id
-    """, high_score=HIGH_SCORE)
-    items = [dict(row) for row in rows]
-    return jsonify(items=items, total=len(items))
+    """
+
+
+QUEUE_ORDER = "priority, score DESC NULLS LAST, innovation_id, match_id, interaction_id"
+
+
+def _queue_item(row):
+    kind = row["type"]
+    description = row["description"]
+    next_step = QUEUE_TYPES[kind]
+    if kind == "contact_request" and row["match_id"] is not None:
+        next_step = "Przeczytaj prośbę i podejmij decyzję w dopasowaniu tej organizacji."
+    elif kind == "path_approval":
+        path = domain.PATHS.get(row["path"])
+        if path:
+            description = f"Proponowana ścieżka „{path}” czeka na zatwierdzenie."
+    elif kind == "missing_evidence":
+        missing = [item for item in row["assessment_items"] if item.get("missing")]
+        criterion = max(missing, key=lambda item: item.get("weight", 0))
+        if criterion.get("label"):
+            description = f"Brakuje danych do oceny kryterium „{criterion['label']}”."
+        if criterion.get("question"):
+            next_step = f"Zapytaj twórców: {criterion['question']}"
+    elif kind == "low_confidence":
+        scored = [
+            item for item in row["assessment_items"] or []
+            if item.get("confidence") is not None and not item.get("override") and item.get("label")
+        ]
+        if scored:
+            criterion = min(scored, key=lambda item: item["confidence"])
+            description = f"Najmniej pewne kryterium to „{criterion['label']}”."
+
+    return {
+        "innovation_id": row["innovation_id"], "title": row["title"], "type": kind,
+        "description": description, "next_step": next_step, "match_id": row["match_id"],
+        "interaction_id": row["interaction_id"],
+    }
+
+
+@bp.get("/broker/queue")
+def queue():
+    legacy = not any(key in request.args for key in ("type", "limit", "offset"))
+    if legacy:
+        rows = _assessment_rows(f"""
+            {_queue_source(False)}
+            SELECT innovation_id, title, type, description, match_id FROM active
+            ORDER BY {QUEUE_ORDER}
+        """, legacy=True, high_score=HIGH_SCORE)
+        items = [dict(row) for row in rows]
+        return jsonify(items=items, total=len(items))
+
+    kind = request.args.get("type")
+    require_key(kind, QUEUE_TYPES, "type")
+    limit, offset = page_args(default_limit=8, max_limit=50)
+    user = current_user()
+    rows = _assessment_rows(f"""
+        {_queue_source(user is not None and user.role == "broker")},
+        filtered AS (
+            SELECT * FROM active WHERE CAST(:kind AS text) IS NULL OR type = :kind
+        ),
+        totals AS (
+            SELECT (SELECT count(*) FROM filtered) AS total, count(*) AS overall FROM active
+        ),
+        page AS (
+            SELECT * FROM filtered ORDER BY {QUEUE_ORDER} LIMIT :limit OFFSET :offset
+        )
+        SELECT page.*, totals.*, latest.items AS assessment_items
+        FROM totals LEFT JOIN page ON true
+        LEFT JOIN latest ON latest.innovation_id = page.innovation_id
+            AND page.type IN ('missing_evidence', 'low_confidence')
+        ORDER BY {QUEUE_ORDER}
+    """, legacy=False, high_score=HIGH_SCORE, kind=kind, limit=limit, offset=offset).all()
+    response = jsonify(
+        items=[_queue_item(row) for row in rows if row["innovation_id"] is not None],
+        total=rows[0]["total"], overall=rows[0]["overall"], limit=limit, offset=offset,
+    )
+    response.cache_control.no_store = True
+    return response

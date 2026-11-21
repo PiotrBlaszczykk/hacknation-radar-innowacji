@@ -33,3 +33,7 @@ Modele językowe działają lokalnie przez Ollamę, więc treść zgłoszeń nie
 ## Licencja
 
 EUPL-1.2, tekst w pliku `LICENSE`.
+
+### Społecznościowy feed demonstracyjny
+
+Po załadowaniu danych startowych uruchom w katalogu backend polecenie `uv run flask --app app social-demo`. Dodaje tabele obserwacji do istniejącej bazy i zakłada personę „Lena Wrona · demo” z obserwowanymi osobami i organizacjami. Kolejne uruchomienie zachowuje jej aktywność. Wybierz Lenę w nagłówku i otwórz zakładkę „Obserwowani”.

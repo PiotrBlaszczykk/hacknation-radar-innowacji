@@ -52,7 +52,7 @@ export function useRadarSources() {
 export function useRunRadar(source: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => post<RadarRun>('/radar/run', { source, limit: 20 }),
+    mutationFn: () => post<RadarRun>('/radar/run', { source }),
     onSuccess: async (result) => {
       if (result.created || result.updated) {
         await Promise.all([

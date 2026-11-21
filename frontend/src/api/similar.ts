@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { api } from './client.ts'
 import type { Innovation } from './types.ts'
 
-export const noveltyMinLength = 40
+export const noveltyMinLength = 30
 
 export const relationLabel = {
   to_samo: 'Rozwiązuje ten sam problem w ten sam sposób',
@@ -57,7 +57,7 @@ export function useSimilarHints(text: string) {
   return useQuery({
     queryKey: ['novelty', text],
     queryFn: ({ signal }) => checkIdea(text, signal),
-    enabled: text.length > noveltyMinLength,
+    enabled: text.trim().length >= noveltyMinLength,
     retry: false,
     staleTime: 60_000,
     gcTime: 60_000,

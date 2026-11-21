@@ -35,6 +35,7 @@ function MessageList({ messages }: { messages: SocialMessage[] }) {
 }
 
 function PersonaSocialPanel({ innovation, personaId }: { innovation: InnovationFull; personaId: number | null }) {
+  const { persona } = usePersona()
   const { data, error, isPending } = useInteractions(innovation.id, personaId)
   const interaction = useCreateInteraction(innovation.id, personaId)
   const claim = useClaimInnovation(innovation.id, personaId)
@@ -90,9 +91,18 @@ function PersonaSocialPanel({ innovation, personaId }: { innovation: InnovationF
             {personaId === null && <p className="text-sm text-slate-500">Wybierz personę, aby dołączyć.</p>}
             {interaction.error && <ErrorNote error={interaction.error} />}
 
-            <section className="space-y-3 border-t border-slate-200 pt-4">
+          </>
+        )}
+        <section id="prosby-o-kontakt" tabIndex={-1} className="space-y-3 scroll-mt-4 border-t border-slate-200 pt-4 lg:scroll-mt-32">
+          {data && (
+            <>
               <h4 className={sectionHeading}>Prośby o kontakt <span className="ml-1">{data.counts.kontakt}</span></h4>
               {data.can_read_contacts && <MessageList messages={data.contact_requests} />}
+              {persona?.role === 'broker' && data.contact_requests.length > 0 && (
+                <a href="#dopasowania" className="inline-flex min-h-9 items-center text-sm font-semibold text-brand-700 hover:underline">
+                  Przejdź do dopasowań
+                </a>
+              )}
               {contactSent && <p role="status" className="text-sm text-emerald-700">Prośba o kontakt została wysłana.</p>}
               {showContactForm ? (
                 <form
@@ -141,10 +151,13 @@ function PersonaSocialPanel({ innovation, personaId }: { innovation: InnovationF
                   Poproś o kontakt
                 </Button>
               )}
-            </section>
-
-            <section className="space-y-3 border-t border-slate-200 pt-4">
-              <h4 className={sectionHeading}>Komentarze <span className="ml-1">{data.counts.komentarz}</span></h4>
+            </>
+          )}
+        </section>
+        <section id="komentarze" tabIndex={-1} className="space-y-3 scroll-mt-4 border-t border-slate-200 pt-4 lg:scroll-mt-32">
+          <h4 className={sectionHeading}>Komentarze {data && <span className="ml-1">{data.counts.komentarz}</span>}</h4>
+          {data && (
+            <>
               {data.comments.length ? (
                 <MessageList messages={data.comments} />
               ) : (
@@ -172,9 +185,9 @@ function PersonaSocialPanel({ innovation, personaId }: { innovation: InnovationF
                 </Field>
                 <Button type="submit" variant="secondary" disabled={disabled || !comment.trim()}>Dodaj komentarz</Button>
               </form>
-            </section>
-          </>
-        )}
+            </>
+          )}
+        </section>
       </Card>
     </>
   )

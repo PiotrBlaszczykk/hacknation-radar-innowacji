@@ -6,6 +6,12 @@ from .extensions import db
 
 
 def register_cli(app: Flask) -> None:
+    @app.cli.command("social-demo")
+    def social_demo():
+        """Dodaje personę i przykładowe rozmowy do istniejącej bazy z seedem."""
+        from .seed.social_demo import install
+        click.echo(f"Persona społecznościowa: {install()}")
+
     @app.cli.command("db-reset")
     def db_reset():
         """Kasuje tabele, tworzy schemat od nowa i ładuje dane startowe."""

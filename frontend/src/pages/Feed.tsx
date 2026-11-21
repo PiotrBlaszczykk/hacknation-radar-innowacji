@@ -1,6 +1,6 @@
-import { ArrowLeft, ArrowUpRight, ChevronDown, CircleHelp, Search, SlidersHorizontal } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, CircleHelp, Compass, Search, SlidersHorizontal } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { getPersonaId } from '../api/client.ts'
 import { MAX_ABOUT, useFeed, useFeedExplain, useSaveProfile, type FeedFilters, type FeedTab } from '../api/feed.ts'
 import { useInnovation, useMeta } from '../api/hooks.ts'
@@ -9,9 +9,11 @@ import InnovationCard, { sourceLabel } from '../components/InnovationCard.tsx'
 import { Button, Card, ErrorNote, Loading, cx, inputClass } from '../components/ui.tsx'
 import { usePersona } from '../lib/persona.tsx'
 
+const gemsLabel = 'Ukryte perełki'
 const tabs = [
   { id: 'dla_ciebie', label: 'Dla Ciebie' },
-  { id: 'perelki', label: 'Ukryte perełki' },
+  { id: 'obserwowani', label: 'Obserwowani' },
+  { id: 'perelki', label: gemsLabel },
   { id: 'popularne', label: 'Popularne' },
   { id: 'najnowsze', label: 'Najnowsze' },
 ] as const
@@ -25,8 +27,9 @@ const filterFields: { key: keyof FeedFilters; label: string; dictionary: keyof M
 
 const emptyMessages: Record<FeedTab, string> = {
   dla_ciebie: 'Brak innowacji pasujących do wybranych filtrów.',
-  perelki: 'Brak innowacji spełniających kryteria ukrytej perełki w tym zestawie.',
+  perelki: 'Brak mało zauważonych wdrożeń i prób spełniających kryteria.',
   popularne: 'Brak aktywności z ostatnich 14 dni w tym zestawie.',
+  obserwowani: 'Tutaj zobaczysz wpisy, komentarze i reposty osób oraz organizacji, które obserwujesz.',
   najnowsze: 'Brak innowacji pasujących do wybranych filtrów.',
 }
 
@@ -40,31 +43,30 @@ function FeaturedInnovation({ personaId }: { personaId: number | null }) {
   const visitCount = innovation.results?.match(/pierwszym półroczu 2026 r\. urzędnik odwiedził (\d+) mieszkańców/i)?.[1]
 
   return (
-    <article className="grid min-w-0 border-y border-slate-200 bg-shell lg:self-center">
-      <div className={cx('grid min-w-0', visitCount && 'min-[360px]:grid-cols-[minmax(0,1fr)_6rem] md:grid-cols-[minmax(0,1fr)_10rem] xl:grid-cols-[minmax(0,1fr)_11rem]')}>
-        <div className="min-w-0 px-3 py-3.5 sm:px-5 sm:py-6 xl:px-6">
-          <h2 className="wrap-anywhere font-display text-[1.75rem] leading-[.98] font-semibold text-slate-900 md:text-[2.625rem]">{innovation.title}</h2>
-          <p className="mt-2 max-w-[42ch] text-sm leading-snug text-slate-600 md:mt-3 md:text-base">{innovation.problem}</p>
-        </div>
+    <article className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-surface">
+      <div className="px-4 py-4 sm:px-5 sm:py-5">
+        <h2 className="wrap-anywhere font-display text-[1.85rem] leading-[.98] font-bold text-slate-900 max-[359px]:text-[1.4rem] sm:text-[2rem]">{innovation.title}</h2>
+        <p className="mt-2 hidden max-w-[50ch] text-sm leading-snug text-slate-600 sm:block">{innovation.problem}</p>
         {visitCount && (
-          <dl className="flex flex-row items-center gap-2 border-t border-slate-200 px-3 py-2 min-[360px]:flex-col min-[360px]:items-start min-[360px]:gap-0 min-[360px]:border-t-0 min-[360px]:border-l min-[360px]:py-3.5 md:justify-center md:px-5">
-            <dt className="order-2 text-xs leading-snug text-slate-700 md:text-sm">
+          <dl className="mt-4 flex items-center gap-3 border-t border-slate-200 pt-3">
+            <dt className="order-2 text-sm font-semibold leading-tight text-slate-800">
               odwiedzonych mieszkańców
-              <span className="mt-1 block whitespace-nowrap text-[.6875rem] font-semibold text-slate-500 md:text-xs">I półrocze 2026</span>
+              <span className="mt-0.5 block text-xs font-normal text-slate-500">I półrocze 2026</span>
             </dt>
-            <dd className="font-display text-5xl leading-none font-semibold tabular-nums text-brand-600 md:text-8xl md:leading-[.87]">{visitCount}</dd>
+            <dd className="font-display text-[2.75rem] leading-[.85] font-bold tabular-nums text-brand-700">{visitCount}</dd>
           </dl>
         )}
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-x-3 border-t border-slate-200 px-3 sm:px-5 xl:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 border-t border-slate-200 bg-slate-50 px-4 sm:px-5">
         <a href={innovation.source_url} target="_blank" rel="noreferrer"
-          className="inline-flex min-h-10 items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 hover:underline">
+          className="inline-flex min-h-11 items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 hover:underline">
           {innovation.organization?.name ?? sourceLabel(innovation.source_name) ?? 'Źródło'}
           <ArrowUpRight className="size-3.5 shrink-0" aria-hidden="true" />
         </a>
         <Link to={`/innowacje/${innovation.id}`}
-          className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline">
-          Otwórz kartę <ArrowUpRight className="size-4" aria-hidden="true" />
+          className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline">
+          <span className="not-sr-only max-[359px]:sr-only">Otwórz kartę</span><span className="min-[360px]:hidden" aria-hidden="true">Karta</span>
+          <ArrowRight className="size-4" aria-hidden="true" />
         </Link>
       </div>
     </article>
@@ -75,7 +77,8 @@ export default function Feed() {
   const { persona } = usePersona()
   const personaId = persona?.id ?? getPersonaId()
   const resultsHeading = useRef<HTMLHeadingElement>(null)
-  const [tab, setTab] = useState<FeedTab>('dla_ciebie')
+  const [pageParams, setPageParams] = useSearchParams()
+  const tab = tabs.find(({ id }) => id === pageParams.get('tab'))?.id ?? (persona?.name === 'Lena Wrona · demo' ? 'obserwowani' : 'dla_ciebie')
   const [description, setDescription] = useState('')
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState<FeedFilters>({})
@@ -84,55 +87,75 @@ export default function Feed() {
   const feed = useFeed(personaId, search ? 'dla_ciebie' : tab, search, filters)
   const explanation = useFeedExplain(explaining)
   const save = useSaveProfile()
+  const showingGems = !search && tab === 'perelki'
+  const explanationSections = explanation.data?.sections.filter(
+    ({ title }) => !showingGems || title === gemsLabel,
+  )
   const firstPage = feed.data?.pages[0]
   const savedForSearch = save.variables?.personaId === personaId && save.variables?.input.about === search
   const activeFilters = Object.values(filters).filter(Boolean).length
 
   return (
-    <div className="min-w-0">
-      <div className="grid items-stretch gap-5 sm:gap-7 lg:has-[>article]:grid-cols-[minmax(0,.96fr)_minmax(0,1fr)] lg:gap-12 xl:gap-16">
-        <form
-          className="min-w-0 py-1 sm:py-3 lg:py-5"
-          onSubmit={(event) => {
-            event.preventDefault()
-            const query = description.trim()
-            if (!query) return
-            save.reset()
-            setSearch(query)
-            requestAnimationFrame(() => resultsHeading.current?.focus())
-          }}
-        >
-          <h1 className="font-display text-[2.75rem] leading-[.87] font-bold tracking-tight text-slate-900 uppercase sm:text-6xl lg:text-[5.125rem] xl:text-[5.75rem]">
-            Znajdź <span className="lg:block">innowację</span>
-          </h1>
-          <label htmlFor="feed-description" className="mt-3 block text-sm font-semibold text-slate-700 lg:mt-5">Opisz, czego szukasz</label>
-          <div className="mt-1.5 flex items-stretch">
-            <input
-              id="feed-description"
-              className={cx(inputClass, 'min-w-0 flex-1 rounded-r-none sm:min-h-[3.25rem]')}
-              type="search"
-              required
-              placeholder="Np. mniej smogu w gminie"
-              value={description}
-              maxLength={MAX_ABOUT}
-              onChange={(event) => setDescription(event.target.value)}
-            />
-            <Button type="submit" aria-label="Szukaj innowacji"
-              className="min-h-11 shrink-0 rounded-l-none px-3 sm:px-5">
-              <Search className="size-[1.125rem]" aria-hidden="true" /> Szukaj
-            </Button>
-          </div>
-        </form>
-        <FeaturedInnovation personaId={personaId} />
-      </div>
+    <div className="grid min-w-0 gap-y-4 sm:gap-y-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-10 xl:grid-cols-[minmax(0,1fr)_22rem] xl:gap-x-14">
+      <form
+        className="min-w-0 lg:col-start-1"
+        onSubmit={(event) => {
+          event.preventDefault()
+          const query = description.trim()
+          if (!query) return
+          save.reset()
+          setSearch(query)
+          requestAnimationFrame(() => resultsHeading.current?.focus())
+        }}
+      >
+        <h1 className="font-display text-[2.85rem] leading-[.93] font-bold tracking-tight text-slate-900 max-[359px]:text-[2.4rem] sm:text-[4.125rem] xl:text-[4.75rem]">
+          Odkrywaj <span className="text-brand-700">innowacje.</span>
+        </h1>
+        <label htmlFor="feed-description" className="mt-4 block text-sm font-semibold text-slate-800">Opisz, czego szukasz</label>
+        <div className="mt-1.5 flex max-w-[39rem] items-stretch">
+          <input
+            id="feed-description"
+            className={cx(inputClass, 'min-w-0 flex-1 rounded-r-none bg-surface sm:min-h-12')}
+            type="search"
+            required
+            placeholder="Np. smog w gminie"
+            value={description}
+            maxLength={MAX_ABOUT}
+            onChange={(event) => setDescription(event.target.value)}
+          />
+          <Button type="submit" aria-label="Szukaj innowacji"
+            className="min-h-11 shrink-0 rounded-l-none px-3.5 sm:px-5">
+            <Search className="size-[1.125rem]" aria-hidden="true" /> Szukaj
+          </Button>
+        </div>
+      </form>
+      <aside
+        className={cx('min-w-0 space-y-1 sm:space-y-3 lg:sticky lg:top-36 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start', showingGems && 'hidden lg:block')}
+        aria-label={showingGems ? 'Zapotrzebowania' : 'Wdrożenie i zapotrzebowania'}
+      >
+        {!showingGems && <FeaturedInnovation personaId={personaId} />}
+        <Link to="/zapotrzebowania"
+          className="hidden min-h-11 items-center gap-2.5 rounded-sm px-1 text-sm font-semibold text-slate-700 hover:text-brand-700 hover:underline min-[360px]:flex">
+          <Compass className="size-4 text-brand-700" aria-hidden="true" />
+          Zobacz zapotrzebowania organizacji
+          <ArrowRight className="ml-auto size-4 shrink-0" aria-hidden="true" />
+        </Link>
+      </aside>
 
-      <div className="mt-5 sm:mt-8">
+      <div className="min-w-0 lg:col-start-1">
         {search ? (
           <div className="space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <Button type="button" variant="ghost" onClick={() => { setSearch(''); save.reset() }}>
                 <ArrowLeft className="size-4" aria-hidden="true" /> Wróć do feedu
               </Button>
+              <Link
+                to="/zapotrzebowania?dodaj=1#dodaj-potrzebe"
+                state={{ description: search }}
+                className="inline-flex min-h-10 items-center gap-2 rounded-sm border border-brand-700 px-3 text-sm font-semibold text-brand-700 hover:bg-brand-50"
+              >
+                Zgłoś potrzebę <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
               {personaId !== null && (
                 <Button
                   type="button"
@@ -148,16 +171,20 @@ export default function Feed() {
             {savedForSearch && save.error && <ErrorNote error={save.error} />}
           </div>
         ) : (
-          <nav aria-label="Widoki feedu" className="flex flex-wrap gap-x-3 border-b border-slate-200 max-[359px]:gap-x-2 sm:gap-x-6">
+          <nav aria-label="Widoki feedu" className="flex flex-wrap gap-x-3 border-y border-slate-200 max-[359px]:justify-between max-[359px]:gap-x-1 sm:gap-x-6">
             {tabs.map(({ id, label }) => (
               <button
                 key={id}
                 type="button"
                 aria-current={tab === id ? 'true' : undefined}
-                onClick={() => setTab(id)}
+                onClick={() => setPageParams((previous) => {
+                  const params = new URLSearchParams(previous)
+                  params.set('tab', id)
+                  return params
+                }, { replace: true })}
                 className={cx(
-                  'flex min-h-11 items-center gap-1.5 border-b-2 px-0.5 py-2 text-sm font-semibold sm:px-1',
-                  tab === id ? 'border-brand-600 text-brand-700' : 'border-transparent text-slate-600 hover:text-slate-900',
+                  'flex min-h-11 items-center border-b-2 px-0.5 py-2 text-sm font-bold transition-colors max-[359px]:text-[.8rem] sm:px-1',
+                  tab === id ? 'border-brand-600 text-brand-700' : 'border-transparent text-slate-600 hover:text-brand-700',
                 )}
               >
                 {label}
@@ -199,7 +226,8 @@ export default function Feed() {
             className="flex min-h-10 items-center gap-1.5 rounded-sm py-1 text-sm font-medium text-brand-700 hover:underline"
             onClick={() => setExplaining(!explaining)}
           >
-            <CircleHelp className="size-4" aria-hidden="true" /> Jak dobieramy innowacje?
+            <CircleHelp className="size-4" aria-hidden="true" />
+            {showingGems ? 'Jak wybieramy perełki?' : 'Jak dobieramy innowacje?'}
           </button>
         </div>
 
@@ -207,7 +235,7 @@ export default function Feed() {
           <Card className="mb-4 space-y-4 p-5">
             {explanation.isPending && <Loading />}
             {explanation.error && <ErrorNote error={explanation.error} />}
-            {explanation.data?.sections.map(({ title, lines }) => (
+            {explanationSections?.map(({ title, lines }) => (
               <section key={title}>
                 <h2 className="font-semibold text-slate-900">{title}</h2>
                 <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-600">
@@ -219,18 +247,18 @@ export default function Feed() {
         </div>
 
         <section aria-labelledby="feed-results" className="border-t border-slate-200">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3 sm:py-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2.5">
             <h2 id="feed-results" ref={resultsHeading} tabIndex={-1}
-              className="section-title scroll-mt-4 wrap-anywhere lg:scroll-mt-32">
-              {search ? `Wyniki dla „${search}”` : 'Innowacje'}
+              className={cx('scroll-mt-4 wrap-anywhere lg:scroll-mt-32', search ? 'section-title' : 'text-sm font-bold')}>
+              {search ? `Wyniki dla „${search}”` : showingGems ? 'Mało zauważone wdrożenia i próby' : 'Wpisy'}
             </h2>
-            {firstPage && <p className="technical-label tabular-nums">Liczba wyników: {resultCount.format(firstPage.total)}</p>}
+            {firstPage && <p className="text-sm tabular-nums text-slate-500">Wyniki · {resultCount.format(firstPage.total)}</p>}
           </div>
           {feed.isPending && <Loading label="Dobieramy innowacje…" />}
           {firstPage?.notice && <p role="status" className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">{firstPage.notice}</p>}
-          <div className="grid border-b border-slate-200 lg:grid-cols-2" aria-busy={feed.isFetching}>
+          <div className="grid divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-surface" aria-busy={feed.isFetching}>
             {feed.data?.pages.flatMap((page) => page.items).map((innovation) => (
-              <InnovationCard key={innovation.id} innovation={innovation} />
+              <InnovationCard key={innovation.id} innovation={innovation} showReason={showingGems} />
             ))}
           </div>
           {firstPage?.total === 0 && (

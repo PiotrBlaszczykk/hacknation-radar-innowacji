@@ -56,6 +56,29 @@ export function useNeeds(offset: number) {
   })
 }
 
+export function useNeed(id: number) {
+  return useQuery({
+    queryKey: ['need', id],
+    queryFn: () => api<Need>(`/needs/${id}`),
+    enabled: Number.isSafeInteger(id) && id > 0,
+  })
+}
+
+export function useCloseNeed() {
+  const cache = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => patch<Need>(`/needs/${id}`, { status: 'zamkniete' }),
+    onSuccess: (need) => {
+      cache.setQueryData(['need', need.id], need)
+      return Promise.all([
+        cache.invalidateQueries({ queryKey: ['needs'] }),
+        cache.invalidateQueries({ queryKey: ['matches'] }),
+        cache.invalidateQueries({ queryKey: ['opportunities'] }),
+      ])
+    },
+  })
+}
+
 export function useNeedMatches(id: number) {
   return useQuery({
     queryKey: ['matches', 'need', id],
@@ -71,6 +94,7 @@ export function useCreateNeed() {
       await Promise.all([
         cache.invalidateQueries({ queryKey: ['needs'] }),
         cache.invalidateQueries({ queryKey: ['matches'] }),
+        cache.invalidateQueries({ queryKey: ['opportunities'] }),
       ])
     },
   })
@@ -107,6 +131,7 @@ export function useMatchDecision() {
         cache.invalidateQueries({ queryKey: ['feed'] }),
         cache.invalidateQueries({ queryKey: ['broker', 'board'] }),
         cache.invalidateQueries({ queryKey: ['broker', 'summary'] }),
+        cache.invalidateQueries({ queryKey: ['broker', 'queue'] }),
       ])
     },
   })

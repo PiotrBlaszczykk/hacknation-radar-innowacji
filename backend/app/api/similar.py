@@ -21,7 +21,7 @@ def _check(text: str, *, exclude_id: int | None = None, limit: int = 5) -> dict:
 def check_idea():
     text = json_body().get("text")
     if not isinstance(text, str) or len(text.strip()) < novelty.MIN_TEXT_LENGTH:
-        abort(400, "Opisz pomysł w co najmniej 40 znakach.")
+        abort(400, f"Opisz pomysł w co najmniej {novelty.MIN_TEXT_LENGTH} znakach.")
     return jsonify(_check(text.strip()))
 
 

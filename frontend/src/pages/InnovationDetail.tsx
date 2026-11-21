@@ -142,6 +142,7 @@ export default function InnovationDetail() {
                   <><span className="font-display text-4xl leading-none font-semibold tabular-nums text-brand-700">{Math.round(innovation.score)}</span><span>/100</span></>
                 )}
               </a>
+              <p className="mt-1 text-xs leading-snug text-slate-600">Ważony wynik udokumentowanych kryteriów. <a className="underline" href="#ocena">Zobacz przesłanki</a></p>
             </dd>
           </div>
         </dl>
