@@ -6,11 +6,11 @@ type Criterion = {
   label: string
   weight: number
   question: string
-  levels: string[]
+  checks: { key: string; text: string; points: number }[]
   missing_question: string
 }
 
-type Criteria = { version: string; criteria: Criterion[] }
+type Criteria = { version: string; min_rank_weight: number; criteria: Criterion[] }
 
 export type AssessmentItem = {
   key: string
@@ -23,6 +23,7 @@ export type AssessmentItem = {
   probabilities: Record<string, number>
   missing: boolean
   question: string | null
+  checks?: (Criterion["checks"][number] & { status: "confirmed" | "denied" | "unknown" })[]
   override?: { user_id: number; user_name: string; at: string }
 }
 
@@ -34,11 +35,14 @@ type Assessment = {
   total: number
   confidence: number | null
   items: AssessmentItem[]
+  review_threshold: number
+  scored_weight: number
+  has_score: boolean
+  ranked: boolean
+  needs_review: boolean
 }
 
 type Override = { key: string; score: number; justification: string }
-
-export const reviewThreshold = 0.35
 
 export function useCriteria() {
   return useQuery({ queryKey: ['criteria'], queryFn: () => api<Criteria>('/criteria') })

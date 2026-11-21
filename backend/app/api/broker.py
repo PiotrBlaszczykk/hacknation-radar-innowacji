@@ -1,17 +1,19 @@
 from flask import Blueprint, jsonify
 from sqlalchemy import text
 
-from .. import domain
+from .. import domain, scoring
 from ..extensions import db
 
 bp = Blueprint("broker", __name__)
 
-LOW_CONFIDENCE = 0.35
 HIGH_SCORE = 75
 BOARD_LIMIT = 20
 
 LATEST_ASSESSMENTS = """
-    SELECT DISTINCT ON (innovation_id) innovation_id, total, confidence, items
+    SELECT DISTINCT ON (innovation_id) innovation_id, total, confidence, items, criteria_version,
+           items @> '[{"missing": true}]'::jsonb AS has_missing,
+           confidence < CASE WHEN criteria_version = :current_version
+               THEN :review_threshold ELSE :legacy_threshold END AS low_confidence
     FROM assessments
     ORDER BY innovation_id, created_at DESC, id DESC
 """
@@ -26,6 +28,13 @@ APPROVED_PATHS = """
 
 def _rows(sql, **params):
     return db.session.execute(text(sql), params).mappings()
+
+
+def _assessment_rows(sql, **params):
+    return _rows(
+        sql, current_version=scoring.CRITERIA_VERSION, review_threshold=scoring.REVIEW_THRESHOLD,
+        legacy_threshold=scoring.LEGACY_REVIEW_THRESHOLD, **params,
+    )
 
 
 def _counts(rows, keys=()):
@@ -50,13 +59,14 @@ def summary():
     """):
         counts[row["dimension"]][row["key"]] = row["total"]
 
-    assessments = _rows(f"""
+    assessments = _assessment_rows(f"""
         WITH latest AS ({LATEST_ASSESSMENTS})
         SELECT count(*) AS total,
-               avg(total) AS average_score,
-               count(*) FILTER (WHERE confidence < :low_confidence) AS low_confidence
+               avg(total) FILTER (WHERE criteria_version <> :current_version
+                   OR items @> '[{{"missing": false}}]'::jsonb) AS average_score,
+               count(*) FILTER (WHERE low_confidence) AS low_confidence
         FROM latest
-    """, low_confidence=LOW_CONFIDENCE).one()
+    """).one()
 
     paths = _counts(_rows(f"""
         WITH approved AS ({APPROVED_PATHS})
@@ -134,7 +144,7 @@ def board():
         status: {"status": status, "items": [], "total": 0}
         for status in domain.STATUSES if status != "archiwum"
     }
-    rows = _rows(f"""
+    rows = _assessment_rows(f"""
         WITH ranked AS (
             SELECT id, title, organization_id, origin, claimed, status, score,
                    count(*) OVER (PARTITION BY status) AS total,
@@ -148,8 +158,7 @@ def board():
         approved AS ({APPROVED_PATHS})
         SELECT r.id, r.title, r.origin, r.claimed, r.status, r.score, r.total,
                CASE WHEN o.id IS NOT NULL THEN json_build_object('id', o.id, 'name', o.name) END AS organization,
-               coalesce(a.confidence < :low_confidence, false)
-                   OR a.items @> '[{{"missing": true}}]'::jsonb IS TRUE AS needs_review,
+               coalesce(a.low_confidence OR a.has_missing, false) AS needs_review,
                p.innovation_id IS NOT NULL AS has_path,
                (SELECT count(*) FROM matches m WHERE m.innovation_id = r.id) AS matches_count,
                (SELECT count(*) FROM interactions t
@@ -162,7 +171,7 @@ def board():
         LEFT JOIN approved p ON p.innovation_id = r.id
         WHERE r.position <= :board_limit
         ORDER BY r.position
-    """, low_confidence=LOW_CONFIDENCE, board_limit=BOARD_LIMIT)
+    """, board_limit=BOARD_LIMIT)
 
     for row in rows:
         item = dict(row)
@@ -174,7 +183,7 @@ def board():
 
 @bp.get("/broker/queue")
 def queue():
-    rows = _rows(f"""
+    rows = _assessment_rows(f"""
         WITH latest AS ({LATEST_ASSESSMENTS}),
         proposed AS (
             SELECT DISTINCT ON (innovation_id) innovation_id, id
@@ -183,9 +192,10 @@ def queue():
         ),
         pending AS (
             SELECT innovation_id, 'low_confidence' AS type,
-                   'Ocena ma niską pewność i wymaga sprawdzenia.' AS description,
+                   CASE WHEN has_missing THEN 'W karcie brakuje danych do części lub całości oceny.'
+                   ELSE 'Model nie rozstrzygnął przesłanek z wystarczającą pewnością.' END AS description,
                    NULL::integer AS match_id, 2 AS priority
-            FROM latest WHERE confidence < :low_confidence
+            FROM latest WHERE low_confidence OR has_missing
             UNION ALL
             SELECT r.innovation_id, 'path_approval',
                    'Proponowana ścieżka czeka na zatwierdzenie.', NULL, 1
@@ -212,6 +222,6 @@ def queue():
         FROM pending p JOIN innovations i ON i.id = p.innovation_id
         WHERE i.status <> 'archiwum'
         ORDER BY p.priority, i.score DESC NULLS LAST, i.id, p.match_id
-    """, low_confidence=LOW_CONFIDENCE, high_score=HIGH_SCORE)
+    """, high_score=HIGH_SCORE)
     items = [dict(row) for row in rows]
     return jsonify(items=items, total=len(items))

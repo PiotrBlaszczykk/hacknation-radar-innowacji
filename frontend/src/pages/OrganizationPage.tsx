@@ -34,7 +34,7 @@ export default function OrganizationPage() {
           </span>
           <div className="min-w-0 flex-1 space-y-2">
             <Badge tone="brand">{label('org_kinds', organization.kind)}</Badge>
-            <h1 className="break-words text-2xl font-semibold text-slate-900">{organization.name}</h1>
+            <h1 className="page-title">{organization.name}</h1>
             <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-600">
               {location && (
                 <span className="inline-flex items-center gap-1.5">
@@ -64,7 +64,7 @@ export default function OrganizationPage() {
         )}
         {organization.interests.length > 0 && (
           <section className="space-y-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Obszary zainteresowań</h2>
+            <h2 className="technical-label">Obszary zainteresowań</h2>
             <div className="flex flex-wrap gap-2">
               {organization.interests.map((key) => <Badge key={key}>{label('domains', key)}</Badge>)}
             </div>
@@ -72,16 +72,16 @@ export default function OrganizationPage() {
         )}
         <dl className="grid grid-cols-2 gap-3 border-t border-slate-200 pt-5 sm:grid-cols-4">
           {metrics.map((metric) => (
-            <div key={metric.label} className="rounded-lg bg-slate-50 px-3 py-3">
+            <div key={metric.label} className="border-t border-slate-200 px-1 py-3">
               <dt className="text-sm text-slate-600">{metric.label}</dt>
-              <dd className="mt-1 text-lg font-semibold tabular-nums text-slate-900">{metric.value}</dd>
+              <dd className="mt-1 font-display text-2xl font-semibold tabular-nums text-slate-900">{metric.value}</dd>
             </div>
           ))}
         </dl>
       </Card>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-slate-900">Innowacje</h2>
+        <h2 className="section-title">Innowacje</h2>
         {innovations.length ? (
           <div className="grid gap-4 md:grid-cols-2">
             {innovations.map((innovation) => <InnovationCard key={innovation.id} innovation={innovation} />)}
@@ -90,7 +90,7 @@ export default function OrganizationPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-slate-900">Zapotrzebowania</h2>
+        <h2 className="section-title">Zapotrzebowania</h2>
         {needs.length ? (
           <div className="grid gap-4 md:grid-cols-2">
             {needs.map((need) => (

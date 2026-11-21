@@ -1,14 +1,146 @@
 @import 'tailwindcss';
 
-@theme {
-  --color-brand-50: #eef6ff;
-  --color-brand-100: #d9eaff;
-  --color-brand-500: #2f6fed;
-  --color-brand-600: #1f57d0;
-  --color-brand-700: #1b46a6;
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/barlow-condensed-600-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-body {
-  @apply bg-slate-100 text-slate-900 antialiased;
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/barlow-condensed-600-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/barlow-condensed-700-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Barlow Condensed";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/barlow-condensed-700-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Source Sans 3";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/source-sans-3-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Source Sans 3";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/source-sans-3-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@theme {
+  --font-sans: 'Source Sans 3', system-ui, sans-serif;
+  --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+
+  --color-canvas: #101113;
+  --color-shell: #151619;
+  --color-surface: #191b1e;
+  --color-control: #6c6e74;
+  --color-ink: #201408;
+
+  --color-slate-50: #202226;
+  --color-slate-100: #292c30;
+  --color-slate-200: #36393e;
+  --color-slate-300: #6c6e74;
+  --color-slate-400: #909398;
+  --color-slate-500: #a6a9af;
+  --color-slate-600: #b8bbc0;
+  --color-slate-700: #d2d4d7;
+  --color-slate-800: #e3e4e6;
+  --color-slate-900: #f3f2f0;
+
+  --color-brand-50: #30261c;
+  --color-brand-100: #55402b;
+  --color-brand-500: #e09d56;
+  --color-brand-600: #ffbc72;
+  --color-brand-700: #ffc98f;
+  --color-amber-50: #32281c;
+  --color-amber-800: #f2c487;
+  --color-amber-900: #ffd6a1;
+  --color-emerald-50: #1c2c25;
+  --color-emerald-700: #a4d5b9;
+  --color-rose-50: #352326;
+  --color-rose-700: #ffb9bd;
+  --color-violet-50: #262932;
+  --color-violet-700: #c2cee4;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    scrollbar-color: var(--color-slate-300) var(--color-canvas);
+  }
+
+  body {
+    @apply bg-canvas text-slate-900 antialiased;
+  }
+
+  ::selection {
+    color: var(--color-ink);
+    background: var(--color-brand-600);
+  }
+
+  :where(input, textarea)::placeholder {
+    color: var(--color-slate-500);
+    opacity: 1;
+  }
+
+  :where(input, textarea) {
+    caret-color: var(--color-brand-600);
+  }
+}
+
+/* Outside the utility layer so the focus outline also covers styled form controls. */
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-brand-600);
+  outline-offset: 3px;
+}
+
+@layer components {
+  .page-title {
+    @apply font-display text-5xl font-semibold leading-[.98] tracking-tight text-balance text-slate-900 sm:text-6xl;
+    overflow-wrap: anywhere;
+  }
+
+  .section-title {
+    @apply font-display text-3xl font-semibold leading-tight text-balance text-slate-900 sm:text-4xl;
+  }
+
+  .technical-label {
+    @apply text-xs font-semibold tracking-[.10em] uppercase text-slate-500;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

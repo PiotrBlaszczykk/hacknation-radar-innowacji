@@ -133,7 +133,7 @@ def _rules(innovation: Innovation) -> tuple[dict[str, int], list[dict]]:
     return scores, reasons
 
 
-def _resolve(innovation: Innovation, options: list[str], reasons: list[dict]) -> dict | None:
+def _resolve(innovation: Innovation, options: list[str], reasons: list[dict], *, strict: bool) -> dict | None:
     if len(options) < 2:
         return None
 
@@ -158,6 +158,8 @@ def _resolve(innovation: Innovation, options: list[str], reasons: list[dict]) ->
             "criteria": {key: f"{domain.PATHS[key]}. {PATH_DESCRIPTIONS[key]}" for key in options},
         }, timeout=8)
     except LLMUnavailable:
+        if strict:
+            raise
         return None
     if answer.get("choice") not in options:
         return None
@@ -180,7 +182,7 @@ def _record(
     return recommendation
 
 
-def recommend(innovation: Innovation) -> Recommendation:
+def recommend(innovation: Innovation, *, strict: bool = False) -> Recommendation:
     """Zapisuje wynik i jego przyczyny w bieżącej transakcji."""
     scores, reasons = _rules(innovation)
     ranking = sorted(scores, key=scores.get, reverse=True)
@@ -190,7 +192,7 @@ def recommend(innovation: Innovation) -> Recommendation:
         candidates = []
     else:
         candidates = [key for key in ranking if scores[key] > 0 and scores[ranking[0]] - scores[key] <= TIE_MARGIN]
-    decision = _resolve(innovation, candidates, reasons)
+    decision = _resolve(innovation, candidates, reasons, strict=strict)
     confidence = None
     engine = "reguly"
     if decision:

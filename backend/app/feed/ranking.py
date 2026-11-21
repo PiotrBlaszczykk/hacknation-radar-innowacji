@@ -16,11 +16,10 @@ POST_FIELDS = (
     I.origin, I.source_name, I.source_url, I.claimed, I.status, I.score, I.path,
     I.novelty, I.created_at, I.organization_id, I.author_id,
 )
-STOP_WORDS = set("a aby albo czy dla do i jak jaki ma na nad np o od oraz po pod przy się sposób szukam w we z za ze".split())
-QUERY_ALIASES = {
-    "smog": (r"smog", r"pył\w* zawieszon", r"pm2", r"jakoś\w* powietrz"),
-    "senior": (r"senior", r"osob\w* starsz", r"osób starsz"),
-}
+STOP_WORDS = set(
+    "a aby albo bez bo chcę chcemy czy dla do i ich jak jaki jest ma można na nad np o od oraz po pod "
+    "podczas przez przy się sposób szukam szukamy to w we z za ze żeby".split()
+)
 
 
 def _days_since(column, now):
@@ -62,29 +61,26 @@ def _base(scope, stats):
     )
 
 
-def _query_patterns(query):
-    terms = [word for word in re.findall(r"[^\W_]+", query.casefold()) if len(word) >= 2 and word not in STOP_WORDS]
-    patterns = []
-    for word in terms[:32]:
-        aliases = next((value for key, value in QUERY_ALIASES.items() if word.startswith(key)), None)
-        if aliases:
-            pattern = r"\m(" + "|".join(aliases) + ")"
-        else:
-            pattern = r"\m" + re.escape(word) + (r"\M" if len(word) < 5 else "")
-        patterns.append(pattern)
-    return list(dict.fromkeys(patterns))
-
-
 def _lexical(query):
-    patterns = _query_patterns(query)
-    if not patterns:
+    terms = dict.fromkeys(
+        word for word in re.findall(r"[^\W_]+", query.casefold()) if len(word) >= 2 and word not in STOP_WORDS
+    )
+    if not terms:
         return literal(0.0)
-    text = func.concat_ws(" ", I.summary, I.description, I.problem, I.solution)
-    term_hits = [
-        case((I.title.op("~*")(pattern), 1.0), (text.op("~*")(pattern), 0.85), else_=0.0)
-        for pattern in patterns
-    ]
-    return sum(term_hits) / len(patterns)
+    words = list(terms)[:32]
+    text = func.concat_ws(" ", I.summary, I.description, I.problem, I.solution, I.keywords)
+    term_hits = []
+    for word in words:
+        pattern = r"\m" + re.escape(word) + (r"\M" if len(word) < 5 else "")
+        matches = [(I.title.op("~*")(pattern), 1.0), (text.op("~*")(pattern), 0.85)]
+        if len(word) >= 7 and word.isalpha():
+            # Dłuższy wspólny początek łapie część odmian. Jedno takie trafienie nie wystarczy.
+            prefix = r"\m" + re.escape(word[:-2])
+            matches.extend([(I.title.op("~*")(prefix), 0.6), (text.op("~*")(prefix), 0.5)])
+        term_hits.append(case(*matches, else_=0.0))
+    hits = sum(term_hits)
+    minimum = 1.0 if len(words) >= 3 else 0.85
+    return case((hits >= minimum, hits / len(words)), else_=0.0)
 
 
 def _area_weights(user):
@@ -112,7 +108,10 @@ def dla_ciebie(base, stats, user, vector, query, now):
     lexical = _lexical(query) if query else literal(0.0)
     if query:
         base = base.where(or_(lexical > 0, similarity >= rules.QUERY_MATCH_MIN))
-        content = rules.QUERY_VECTOR_WEIGHT * semantic + (1 - rules.QUERY_VECTOR_WEIGHT) * lexical
+        content = (
+            lexical if vector is None
+            else rules.QUERY_VECTOR_WEIGHT * semantic + (1 - rules.QUERY_VECTOR_WEIGHT) * lexical
+        )
     else:
         content = semantic
 
@@ -132,7 +131,11 @@ def dla_ciebie(base, stats, user, vector, query, now):
     order = [rank.desc(), *NEWEST_ORDER]
     if not query and user.organization_id is not None:
         order.insert(0, func.coalesce(I.organization_id == user.organization_id, False))
-    return base.add_columns(*(expr.label(name) for name, expr in components.items())).order_by(*order)
+    return base.add_columns(
+        *(expr.label(name) for name, expr in components.items()),
+        (similarity >= rules.QUERY_MATCH_MIN).label("semantic_match"),
+        (lexical > 0).label("word_match"),
+    ).order_by(*order)
 
 
 def popularne(base, stats):
@@ -166,8 +169,17 @@ def _why_personal(innovation, row, user, query):
         need = next((key for key in rules.NEED_FIT.get(kind, ()) if key in (innovation.support_needs or [])), None)
         need_reason = rules.NEED_REASONS.get(need)
 
+    content_reason = "Treść pasuje do opisu w Twoim profilu."
+    if query:
+        if row["semantic_match"] and row["word_match"]:
+            content_reason = "Pasuje temat i słownictwo z Twojego opisu."
+        elif row["semantic_match"]:
+            content_reason = "Temat pasuje do Twojego opisu."
+        else:
+            content_reason = "Słownictwo pasuje do Twojego opisu."
+
     reasons = {
-        "content": "Treść pasuje do Twojego opisu." if query else "Treść pasuje do opisu w Twoim profilu.",
+        "content": content_reason,
         "areas": "Wspólne obszary z Twoim profilem lub organizacją: " + ", ".join(areas) + ".",
         "need": need_reason,
         "stage": f"Etap pasuje do Twojej organizacji — {domain.STAGES.get(innovation.stage, '').lower()}.",
@@ -178,7 +190,10 @@ def _why_personal(innovation, row, user, query):
     weights = rules.WEIGHTS["query" if query else "profile"]
     contributions = [(row[key] * weight, reasons[key]) for key, weight in weights.items() if row[key] > 0 and reasons[key]]
     contributions.sort(key=lambda item: item[0], reverse=True)
-    return " ".join(reason for _, reason in contributions[:2])
+    if not query:
+        return " ".join(reason for _, reason in contributions[:2])
+    other_reason = next((reason for _, reason in contributions if reason != content_reason), "")
+    return " ".join(filter(None, (content_reason, other_reason)))
 
 
 def _why_gem(innovation, row):

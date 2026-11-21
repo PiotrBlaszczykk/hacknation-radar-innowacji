@@ -164,7 +164,7 @@ def test_radar_api_and_cli(app, client, cached_radon):
     assert first.exit_code == 0, first.output
     assert "dodano 2" in first.output
 
-    assert client.post("/api/radar/run", json={"source": "ncbr"}).status_code == 400
+    assert client.post("/api/radar/run", json={"source": "nieznane"}).status_code == 400
     assert client.post("/api/radar/run", json={"source": radon.SOURCE, "limit": True}).status_code == 400
     result = client.post("/api/radar/run", json={"source": radon.SOURCE, "limit": 1}).get_json()
     assert (result["fetched"], result["created"], result["skipped"]) == (1, 1, 0)
@@ -175,7 +175,7 @@ def test_radar_api_and_cli(app, client, cached_radon):
     active = sources[0]
     assert active["count"] == 3 and active["rules"]
     assert active["last_run"]["created"] == 1 and active["last_run"]["finished_at"]
-    assert [source["status"] for source in sources] == ["aktywne", "planowane", "planowane", "planowane"]
+    assert all(item["status"] == "aktywne" for item in sources if item["name"] in {radon.SOURCE, "strony_instytucji"})
 
 
 def test_enrich_commits_each_record_and_reuses_existing_raw(app, cached_radon, monkeypatch):

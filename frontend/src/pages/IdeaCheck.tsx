@@ -18,8 +18,8 @@ export default function IdeaCheck() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Sprawdź pomysł</h1>
+      <header className="space-y-2 border-b border-slate-200 pb-4 sm:pb-5">
+        <h1 className="page-title">Sprawdź pomysł</h1>
         <p className="text-slate-600">Zobacz, kto w radarze pracuje nad podobnym rozwiązaniem.</p>
       </header>
 
@@ -58,7 +58,7 @@ export default function IdeaCheck() {
           <Card className="space-y-5 border-brand-100 bg-brand-50/40 p-5 sm:p-7">
             <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
               <div className="flex items-baseline gap-1 text-brand-700">
-                <span className="text-6xl font-semibold tracking-tight tabular-nums">{result.novelty}</span>
+                <span className="font-display text-6xl font-semibold tracking-tight tabular-nums">{result.novelty}</span>
                 <span className="text-base font-medium">/ 100</span>
               </div>
               <div className="space-y-1">
@@ -69,7 +69,7 @@ export default function IdeaCheck() {
 
             <div>
               <div
-                className="relative h-2 rounded-full bg-linear-to-r from-amber-300 via-sky-300 to-brand-600"
+                className="relative mx-2 h-2 rounded-full bg-slate-300"
                 role="meter"
                 aria-label="Świeżość pomysłu w radarze"
                 aria-valuemin={0}
@@ -77,7 +77,7 @@ export default function IdeaCheck() {
                 aria-valuenow={result.novelty}
               >
                 <span
-                  className="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-slate-900 shadow"
+                  className="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-canvas bg-brand-600"
                   style={{ left: `${result.novelty}%` }}
                 />
               </div>
@@ -129,7 +129,7 @@ export default function IdeaCheck() {
                   : 'Sprawdź, co możesz wykorzystać z doświadczeń innych, i zgłoś swój pomysł.'}
             </p>
             <Link
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+              className="inline-flex items-center gap-2 min-h-10 rounded-sm bg-brand-600 px-4 py-2 text-sm font-semibold text-ink hover:bg-brand-700"
               to="/zglos"
             >
               Zgłoś innowację <ArrowRight className="size-4" aria-hidden="true" />

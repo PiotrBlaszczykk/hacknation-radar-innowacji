@@ -131,7 +131,7 @@ def test_match_actions_record_history_and_survive_refresh(client):
     assert events[-1]["payload"]["innovation_status"]["to"] == "w_kontakcie"
 
     fund = next(item for item in refreshed if item["need"] and item["need"]["id"] == 2)
-    client.patch("/api/innovations/3", json={"status": "wdrazana"})
+    assert client.patch("/api/innovations/3", json={"status": "wdrazana"}, headers=headers(3)).status_code == 200
     response = client.patch(f"/api/matches/{fund['id']}", json={"status": "kontakt"}, headers=headers(3))
     assert response.status_code == 200
     assert client.get("/api/innovations/3").get_json()["status"] == "wdrazana"

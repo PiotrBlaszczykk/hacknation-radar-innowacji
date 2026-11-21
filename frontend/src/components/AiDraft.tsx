@@ -46,7 +46,7 @@ export default function AiDraft({ text, onTextChange, onDraft }: Props) {
           {structure.isPending ? 'Układamy propozycję karty…' : ''}
         </span>
       </div>
-      {structure.error && <div role="alert"><ErrorNote error={structure.error} /></div>}
+      {structure.error && <ErrorNote error={structure.error} />}
     </section>
   )
 }

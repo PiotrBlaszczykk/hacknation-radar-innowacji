@@ -6,10 +6,15 @@ type Counts = {
   created: number
   skipped: number
   missing_embeddings: number
+  updated?: number
 }
 
 type RadarRun = Counts & {
   created_items: { id: number; title: string }[]
+  updated_items?: { id: number; title: string }[]
+  selection?: {
+    unavailable?: { url: string; reason: string }[]
+  }
 }
 
 type LastRun = {
@@ -27,6 +32,12 @@ export type RadarSource = {
   count: number
   rules: string[]
   last_run: LastRun | null
+  statistics?: {
+    scanned: number | null
+    complete_scan: boolean | null
+    reviewed: number
+    rejected: number
+  }
 }
 
 const sourcesKey = ['radar', 'sources']
@@ -43,10 +54,11 @@ export function useRunRadar(source: string) {
   return useMutation({
     mutationFn: () => post<RadarRun>('/radar/run', { source, limit: 20 }),
     onSuccess: async (result) => {
-      if (result.created) {
+      if (result.created || result.updated) {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['innovations'] }),
           queryClient.invalidateQueries({ queryKey: ['feed'] }),
+          ...(result.updated_items ?? []).map(({ id }) => queryClient.invalidateQueries({ queryKey: ['innovation', id] })),
         ])
       }
     },

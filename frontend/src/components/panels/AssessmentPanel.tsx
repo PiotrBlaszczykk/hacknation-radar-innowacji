@@ -1,12 +1,17 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { reviewThreshold, useAssessment, useSaveAssessment, type AssessmentItem } from '../../api/assessments.ts'
+import { useAssessment, useSaveAssessment, type AssessmentItem } from '../../api/assessments.ts'
 import type { InnovationFull } from '../../api/types.ts'
 import { usePersona } from '../../lib/persona.tsx'
 import { Badge, Button, Card, ErrorNote, Field, Loading, inputClass } from '../ui.tsx'
 
-const points = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 2 })
-const percent = new Intl.NumberFormat('pl-PL', { style: 'percent', maximumFractionDigits: 1 })
+const points = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 })
+const criterionPoints = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 2 })
+const outcomes = {
+  confirmed: { text: 'Potwierdzona', tone: 'green' },
+  denied: { text: 'Zaprzeczona', tone: 'amber' },
+  unknown: { text: 'Brak informacji', tone: 'slate' },
+} as const
 const dateTime = new Intl.DateTimeFormat('pl-PL', { dateStyle: 'short', timeStyle: 'short' })
 
 function OverrideForm({
@@ -69,7 +74,7 @@ export default function AssessmentPanel({ innovation }: { innovation: Innovation
   return (
     <Card className="p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ocena potencjału</h2>
+        <h2 className="technical-label">Ocena potencjału</h2>
         <Link to="/kryteria" className="text-sm font-medium text-brand-700 hover:underline">Kryteria oceny</Link>
       </div>
       {isPending && <Loading label="Wczytywanie oceny…" />}
@@ -83,27 +88,32 @@ export default function AssessmentPanel({ innovation }: { innovation: Innovation
         <>
           <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1">
             <p className="text-3xl font-semibold tabular-nums text-brand-700">
-              {points.format(assessment.total)}<span className="text-base font-normal text-slate-500"> / 100</span>
+              {assessment.has_score ? <>{points.format(assessment.total)}<span className="text-base font-normal text-slate-500"> / 100</span></>
+                : 'Brak danych do oceny'}
             </p>
-            {assessment.confidence != null && (
-              <span className="text-sm text-slate-600">Pewność modelu {percent.format(assessment.confidence)}</span>
-            )}
+            {assessment.has_score && !assessment.ranked && <Badge tone="amber">Wynik wstępny · poza rankingiem</Badge>}
+            <span className="text-sm text-slate-600">
+              {assessment.scored_weight < 100 ? `Dane pokrywają ${assessment.scored_weight}% wag kryteriów`
+                : assessment.needs_review ? 'Ocena wymaga sprawdzenia przez brokera'
+                  : assessment.confidence == null ? 'Ocena sprawdzona przez brokera' : 'Model rozstrzygnął z wystarczającą pewnością'}
+            </span>
           </div>
           <ul className="mt-3 divide-y divide-slate-200">
             {assessment.items.map((item) => {
               const canEdit = persona?.role === 'broker'
               const isEditing = canEdit && editing?.assessmentId === assessment.id && editing.key === item.key
-              const lowConfidence = item.confidence != null && item.confidence < reviewThreshold
+              const lowConfidence = item.confidence != null && item.confidence < assessment.review_threshold && !item.missing
               return (
                 <li key={item.key} className="space-y-2 py-4">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                     <h3 className="text-sm font-semibold text-slate-900">{item.label}</h3>
                     <span className="text-sm tabular-nums text-slate-700">
-                      <strong className="font-semibold">{points.format(item.score)} / 5</strong>
-                      {' · '}waga {item.weight}%
+                      {!item.missing && <><strong className="font-semibold">{criterionPoints.format(item.score)} / 5</strong>{' · '}</>}
+                      {item.missing && <span>Bez punktacji · </span>}
+                      waga {item.weight}%
                     </span>
                   </div>
-                  <div
+                  {!item.missing && <div
                     role="progressbar"
                     aria-label={item.label}
                     aria-valuenow={item.score}
@@ -112,13 +122,12 @@ export default function AssessmentPanel({ innovation }: { innovation: Innovation
                     className="h-2 overflow-hidden rounded-full bg-slate-100"
                   >
                     <div
-                      className={item.missing ? 'h-full rounded-full bg-slate-400' : 'h-full rounded-full bg-brand-500'}
+                      className="h-full rounded-full bg-brand-500"
                       style={{ width: `${20 * item.score}%` }}
                     />
-                  </div>
+                  </div>}
                   <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
                     {item.missing && <Badge tone="amber">Brak danych</Badge>}
-                    {item.confidence != null && <span>Pewność {percent.format(item.confidence)}</span>}
                     {lowConfidence && <Badge tone="amber">Do sprawdzenia przez człowieka</Badge>}
                     {item.override && (
                       <Badge tone="green">
@@ -126,13 +135,27 @@ export default function AssessmentPanel({ innovation }: { innovation: Innovation
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm leading-relaxed text-slate-800">{item.justification}</p>
+                  {!item.checks && <p className="text-sm leading-relaxed text-slate-800">{item.justification}</p>}
+                  {item.checks && (
+                    <ul className="space-y-2 text-sm text-slate-800">
+                      {item.checks.map((check) => (
+                        <li key={check.key} className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                          <Badge tone={outcomes[check.status].tone}>{outcomes[check.status].text}</Badge>
+                          <span>{check.text}</span>
+                          <span className="text-slate-500">
+                            {check.status === 'unknown' ? `Do ${check.points} pkt`
+                              : `${check.status === 'confirmed' ? check.points : 0} / ${check.points} pkt`}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   {item.evidence && (
                     <blockquote className="border-l-2 border-brand-100 pl-3 text-sm leading-relaxed text-slate-600">
                       „{item.evidence}”
                     </blockquote>
                   )}
-                  {item.missing && item.question && (
+                  {item.question && (
                     <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
                       <strong className="block font-medium">Pytanie do twórcy</strong>
                       {item.question}
@@ -171,8 +194,7 @@ export default function AssessmentPanel({ innovation }: { innovation: Innovation
           </ul>
           <p className="break-words border-t border-slate-200 pt-3 text-xs text-slate-500">
             {assessment.engine} · Kryteria v{assessment.criteria_version}
-            {assessment.calibrated === true && ' · Skalibrowana pewność'}
-            {assessment.calibrated === false && ' · Nieskalibrowana pewność'}
+            {assessment.calibrated === false && ' · Silnik zastępczy bez kalibracji'}
           </p>
         </>
       )}

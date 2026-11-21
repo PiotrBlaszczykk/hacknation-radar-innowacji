@@ -27,12 +27,27 @@ def _latest(innovation_id: int) -> Assessment | None:
 def _serialize(assessment: Assessment) -> dict:
     data = assessment.to_dict()
     data["calibrated"] = next((item["calibrated"] for item in data["items"] if "calibrated" in item), None)
+    items = data["items"]
+    version = assessment.criteria_version
+    threshold = scoring.review_threshold(version)
+    missing = any(item.get("missing") for item in items)
+    low_confidence = assessment.confidence is not None and assessment.confidence < threshold
+    weight = scoring.scored_weight(items)
+    data.update(
+        review_threshold=threshold,
+        needs_review=missing or low_confidence,
+        scored_weight=weight,
+        has_score=version != scoring.CRITERIA_VERSION or weight > 0,
+        ranked=version != scoring.CRITERIA_VERSION or weight >= scoring.MIN_RANK_WEIGHT,
+    )
     return data
 
 
 @bp.get("/criteria")
 def get_criteria():
-    return jsonify(scoring.CRITERIA)
+    return jsonify({
+        **scoring.CRITERIA, "review_threshold": scoring.REVIEW_THRESHOLD, "min_rank_weight": scoring.MIN_RANK_WEIGHT,
+    })
 
 
 @bp.post("/innovations/<int:innovation_id>/assess")

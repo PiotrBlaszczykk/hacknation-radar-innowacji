@@ -29,7 +29,7 @@ function NeedForm({ onCreated }: { onCreated: (id: number) => void }) {
 
   return (
     <Card className="p-5">
-      <h2 className="text-lg font-semibold text-slate-900">Dodaj zapotrzebowanie</h2>
+      <h2 className="section-title">Dodaj zapotrzebowanie</h2>
       {organization ? (
         <p className="mt-1 text-sm text-slate-600">Publikujesz w imieniu organizacji {organization.name}.</p>
       ) : (
@@ -155,7 +155,7 @@ export default function Needs() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold text-slate-900">Zapotrzebowania</h1>
+        <h1 className="page-title">Zapotrzebowania</h1>
         <p className="mt-2 text-slate-600">
           Opisz problem, dla którego szukasz rozwiązania. Radar wskaże innowacje, które mogą pomóc.
         </p>

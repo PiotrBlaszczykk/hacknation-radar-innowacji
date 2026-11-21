@@ -69,10 +69,18 @@ def test_investor_and_municipality_use_different_stages(client):
     assert [item["id"] for item in prototypes["items"]] != [item["id"] for item in municipal["items"]]
 
 
-def test_description_search_and_filters(client):
+def test_semantic_search_finds_card_without_shared_words(client, monkeypatch):
+    embedding = [1.0] + [0.0] * (EMBED_DIM - 1)
+    db.session.get(Innovation, 3).embedding = embedding
+    db.session.commit()
+    monkeypatch.setattr(llm, "embed", lambda texts, **_: [embedding] * len(texts))
     smog = feed(client, user_id=4, q="sposób na smog w małej gminie")
-    assert "czujnik pyłów" in smog["items"][0]["title"]
-    assert "Twojego opisu" in smog["items"][0]["why"]
+    assert smog["total"] == 1
+    assert smog["items"][0]["id"] == 3
+    assert "Temat pasuje do Twojego opisu." in smog["items"][0]["why"]
+
+
+def test_description_search_and_filters(client):
     seniors = feed(client, user_id=4, q="seniorzy", origin="radar", domain="zdrowie")
     assert seniors["total"] == 1
     assert "Telefon zaufania" in seniors["items"][0]["title"]
@@ -84,9 +92,13 @@ def test_search_uses_words_when_embeddings_are_unavailable(client, monkeypatch):
         raise llm.LLMUnavailable("offline")
 
     monkeypatch.setattr(llm, "embed", offline)
-    result = feed(client, user_id=4, q="seniorzy")
+    result = feed(client, user_id=4, q="wiertarek i drabinek")
     assert "Tymczasowo" in result["notice"]
-    assert "Telefon zaufania" in result["items"][0]["title"]
+    assert result["items"][0]["id"] == 5
+    assert "Słownictwo pasuje do Twojego opisu." in result["items"][0]["why"]
+    assert feed(client, user_id=4, q="seniorzy")["items"][0]["id"] == 6
+    assert feed(client, user_id=4, q="smog")["total"] == 0
+    assert feed(client, user_id=4, q="wiertarki, narciarstwo, gokarty")["total"] == 0
 
 
 def test_bump_changes_popular_order_and_counters(client):

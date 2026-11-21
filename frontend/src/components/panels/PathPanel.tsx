@@ -6,7 +6,7 @@ import type { InnovationFull } from '../../api/types.ts'
 import { usePersona } from '../../lib/persona.tsx'
 import { Badge, Button, Card, ErrorNote, Field, inputClass, Loading } from '../ui.tsx'
 
-const sectionTitle = 'text-xs font-semibold uppercase tracking-wide text-slate-500'
+const sectionTitle = 'technical-label'
 const dateFormat = new Intl.DateTimeFormat('pl-PL', { dateStyle: 'long', timeStyle: 'short' })
 const percentFormat = new Intl.NumberFormat('pl-PL', { style: 'percent', maximumFractionDigits: 1 })
 

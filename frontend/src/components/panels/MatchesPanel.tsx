@@ -97,7 +97,7 @@ export default function MatchesPanel({ innovation }: { innovation: InnovationFul
   return (
     <Card className="space-y-4 p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Dla kogo to może być</h2>
+        <h2 className="technical-label">Dla kogo to może być</h2>
         <Button variant="secondary" disabled={matches.isPending || refresh.isPending} onClick={() => refresh.mutate()}>
           {refresh.isPending ? 'Przeliczanie…' : 'Przelicz dopasowania'}
         </Button>

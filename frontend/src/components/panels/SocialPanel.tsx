@@ -11,7 +11,7 @@ import type { InnovationFull } from '../../api/types.ts'
 import { usePersona } from '../../lib/persona.tsx'
 import { Button, Card, ErrorNote, Field, inputClass, Loading } from '../ui.tsx'
 
-const sectionHeading = 'text-xs font-semibold uppercase tracking-wide text-slate-500'
+const sectionHeading = 'technical-label'
 const formatDate = new Intl.DateTimeFormat('pl-PL', { dateStyle: 'medium', timeStyle: 'short' })
 const toggles = [
   { type: 'obserwuje', text: 'Obserwuj', Icon: Bookmark },

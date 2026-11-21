@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from sqlalchemy import select
 
-from app.api.broker import LOW_CONFIDENCE
+from app.scoring import CRITERIA_VERSION, LEGACY_REVIEW_THRESHOLD, REVIEW_THRESHOLD
 from app.domain import STATUSES
 from app.extensions import db
 from app.models import Assessment, Event, Innovation, Interaction, Match, Recommendation, User
@@ -79,14 +79,15 @@ def test_queue_and_flags_from_latest_assessment_and_interest(client, app):
 
     db.session.add(Assessment(
         innovation_id=innovation.id, criteria_version="1", engine="test", total=81,
-        confidence=LOW_CONFIDENCE, items=[{"missing": True}],
+        confidence=LEGACY_REVIEW_THRESHOLD, items=[{"missing": True}],
     ))
     db.session.commit()
     assert client.get("/api/broker/board").get_json()["columns"][0]["items"][0]["needs_review"]
     assert client.get("/api/broker/summary").get_json()["assessments"] == {
         "total": 1, "average_score": 81, "low_confidence": 0,
     }
-    assert "low_confidence" not in {item["type"] for item in client.get("/api/broker/queue").get_json()["items"]}
+    missing = next(item for item in client.get("/api/broker/queue").json["items"] if item["type"] == "low_confidence")
+    assert "brakuje danych" in missing["description"]
 
 
 def test_approval_and_event_medians(client, app):
@@ -152,3 +153,17 @@ def test_move_updates_column_summary_and_history(client, app):
     assert data["innovations"]["by_status"]["oceniona"] == 1
     assert data["innovations"]["by_origin"]["radar"] == 1
     assert data["median_days"]["to_assessment"] is None
+
+
+def test_current_review_threshold_is_shared_by_assessment_and_broker(client):
+    innovation = db.session.get(Innovation, 1)
+    db.session.add(Assessment(
+        innovation_id=1, criteria_version=CRITERIA_VERSION, engine="test", total=80,
+        confidence=REVIEW_THRESHOLD - 0.01, items=[{"missing": False, "weight": 20}],
+    ))
+    db.session.commit()
+    assessment = client.get("/api/innovations/1/assessment").json
+    assert assessment["needs_review"] and assessment["has_score"]
+    assert not assessment["ranked"]
+    assert client.get("/api/broker/summary").json["assessments"]["low_confidence"] == 1
+    assert client.get("/api/broker/queue").json["items"][0]["innovation_id"] == innovation.id

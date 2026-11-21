@@ -167,7 +167,9 @@ def _rank(pair: dict) -> tuple:
     return pair["overlap"], pair["similarity"]
 
 
-def check_novelty(text: str, *, exclude_id: int | None = None, limit: int = 5) -> dict:
+def check_novelty(
+    text: str, *, exclude_id: int | None = None, limit: int = 5, where=None, strict: bool = False,
+) -> dict:
     """Porównuje opis z kandydatami z radaru i zwraca świeżość w skali 0–100."""
     vectors = llm.embed([text.strip()[:6000]], timeout=EMBEDDING_TIMEOUT)
     if not vectors:
@@ -176,6 +178,7 @@ def check_novelty(text: str, *, exclude_id: int | None = None, limit: int = 5) -
         (candidate, min(1.0, similarity))
         for candidate, similarity in embeddings.nearest(
             Innovation, vectors[0], limit=CANDIDATE_LIMIT, exclude_id=exclude_id,
+            where=(Innovation.status != "archiwum") if where is None else (Innovation.status != "archiwum") & where,
         )
         if similarity >= MIN_SIMILARITY
     ]
@@ -184,6 +187,8 @@ def check_novelty(text: str, *, exclude_id: int | None = None, limit: int = 5) -
     try:
         pairs = [_pair(text[:2400], card_text(candidate), similarity) for candidate, similarity in candidates]
     except llm.LLMUnavailable:
+        if strict:
+            raise
         fallback = True
         pairs = [_vector_pair(similarity) for _, similarity in candidates]
 

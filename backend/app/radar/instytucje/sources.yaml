@@ -1,0 +1,154 @@
+# Wpisy dopisujemy po przeglądzie treści i zasad witryny. "match" sprawdza,
+# czy źródło nadal zawiera krótki fragment potwierdzający fakt lub powód odrzucenia.
+- id: boguchwala
+  name: Szkoła Podstawowa w Boguchwale
+  kind: szkola
+  city: Boguchwała
+  origin: https://spboguchwala.pl
+  indexes: [/]
+  articles:
+    - path: '/?p=47950'
+      title: Klasa na pole! Edukacja ekologiczno-rolnicza
+      match: założyli i prowadzili szkolny ogródek
+      problem: Szkoła chciała przenieść część edukacji przyrodniczej poza salę lekcyjną i powiązać ją z miejscowym rolnictwem.
+      solution: W roku szkolnym 2025/2026 uczniowie prowadzili klasowy ogródek i uczestniczyli w zajęciach na polu doświadczalnym Podkarpackiego Ośrodka Doradztwa Rolniczego.
+      evidence: Dzieci założyły ogródek i sprawdzały, jak światło i woda wpływają na wzrost roślin. Na lokalnym bazarku prezentowały wyniki pracy i rozdawały szczypior oraz sadzonki rzodkiewki z uprawy.
+
+- id: krasne
+  name: Zespół Szkolno-Przedszkolny w Krasnem
+  kind: szkola
+  city: Krasne
+  origin: https://krasne.edu.pl
+  indexes: [/wp/]
+  articles:
+    - path: /wp/innowacje-pedagogiczne/
+      title: W świecie Kamishibai
+      match: zaprezentowały bajkę rodzicom i dzieciom
+      problem: Celem zajęć było rozwijanie w klasach piątych pisania opowiadań, tworzenia ilustracji i pracy zespołowej.
+      solution: W latach 2024–2025 szkolny klub pracował metodą teatru obrazkowego Kamishibai. Uczestniczki wymyśliły historię, ułożyły przebieg zdarzeń, zredagowały tekst i zilustrowały kolejne sceny na kartach.
+      evidence: Uczestniczki opracowały kompletną historię obrazkową i wystawiły ją dla rodziców oraz dzieci na Pikniku Rodzinnym.
+
+- id: sosw-krosno
+  name: Specjalny Ośrodek Szkolno-Wychowawczy w Krośnie
+  kind: szkola
+  city: Krosno
+  origin: https://soswkrosno.szkolnastrona.pl
+  indexes: ['/p,212,komunikacja-w-praktyce', '/p,267,blizej-krosna', '/p,278,czysta-przestrzen']
+  articles:
+    - path: '/a,2211,komunikacja-w-praktyce'
+      title: Komunikacja w praktyce
+      match: samodzielnie zakupionych produktów
+      problem: Ośrodek ćwiczy komunikację uczniów w codziennych sytuacjach, w których muszą posłużyć się nią samodzielnie.
+      solution: Uczniowie ćwiczą porozumiewanie się poza klasą w ramach praktycznych zadań, m.in. podczas wyjścia na zakupy.
+      evidence: Grupa poszła do sklepu i samodzielnie kupiła produkty, z których uczniowie przygotowali kanapki.
+    - path: '/a,2289,blizej-krosna'
+      title: Bliżej Krosna. Nauka lokalnego rzemiosła
+      match: podstawowymi technikami
+      problem: Ośrodek chciał przybliżyć uczniom dziedzictwo Krośnieńskiego i rozwijać zainteresowania artystyczne.
+      solution: Cykl edukacyjny łączy naukę o lokalnym dziedzictwie z działaniami praktycznymi. Jedno ze spotkań poświęcono tradycji tkactwa, budowie krosna i technikom tkania.
+      evidence: Uczniowie uczestniczyli w zajęciach o miejscowej tradycji tkackiej i poznali zastosowanie krosna oraz podstawowe techniki pracy.
+    - path: '/a,2372,podsumowanie-innowacji-pedagogicznej-czysta-przestrzen'
+      title: Czysta Przestrzeń. Program nawyków w internacie
+      match: byli oceniani za utrzymywanie czystości
+      problem: Internat chciał rozwijać nawyki higieniczne i odpowiedzialność za przestrzeń wspólną.
+      solution: Ośrodek zastosował program, w którym wychowankowie otrzymywali ocenę za codzienną dbałość o pokoje, stołówkę, przestrzeń wspólną i higienę osobistą.
+      evidence: Zastosowano obserwację i ocenę zachowań w codziennym życiu internatu. Ośrodek odnotował systematyczne zaangażowanie uczestników programu.
+
+- id: zsp11-rzeszow
+  name: Zespół Szkolno-Przedszkolny nr 11 w Rzeszowie
+  kind: szkola
+  city: Rzeszów
+  origin: https://zsp11.rzeszow.pl
+  indexes: [/page/19/]
+  articles:
+    - path: /2025/05/11/bajeczki-na-dzieciece-smuteczki-podsumowanie-innowacji-pedagogicznej/
+      id_path: '/?p=31259'
+      published: '2025-05-11'
+      title: Bajeczki na dziecięce smuteczki
+      match: dwa razy w miesiącu
+      problem: Placówka chciała wesprzeć rozwój emocjonalny i społeczny trzylatków, zwłaszcza rozpoznawanie i nazywanie emocji.
+      solution: Od października 2024 r. do maja 2025 r. włączono do planu pracy dwa spotkania w miesiącu z bajką terapeutyczną, rozmową, dramą, pracą plastyczną i relaksacją.
+      evidence: Placówka opisała większe zaangażowanie dzieci w rozmowy o uczuciach, większą otwartość wobec rówieśników oraz postęp w rozpoznawaniu i nazywaniu emocji na podstawie obserwacji.
+
+- id: rzeszow
+  name: Gmina Miasto Rzeszów
+  publisher: Urząd Miasta Rzeszowa
+  kind: jst
+  city: Rzeszów
+  origin: https://erzeszow.pl
+  indexes: [/41-miasto-rzeszow/1713-aktualnosci.html]
+  articles:
+    - path: /41-miasto-rzeszow/1713-aktualnosci/147964.html
+      title: Mobilny Urzędnik w Rzeszowie
+      match: odwiedził już 190 mieszkańców
+      summary: Mieszkańcy, którym trudno samodzielnie dotrzeć do urzędu, mogą skorzystać z bezpłatnej wizyty pracownika w domu. W pierwszej połowie 2026 r. mobilny urzędnik odwiedził 190 mieszkańców Rzeszowa.
+      problem: Część mieszkańców ma trudności z dotarciem do urzędu ze względu na wiek, stan zdrowia lub niepełnosprawność.
+      solution: Od 2022 r. urząd bezpłatnie wysyła pracownika do domu mieszkańca. Pracownik dostarcza formularze, pomaga je wypełnić i zabiera dokumenty do urzędu, a po rozpatrzeniu może dostarczyć decyzję.
+      evidence: W dniu publikacji miasto podało ponad 500 korzystających od uruchomienia usługi. W pierwszym półroczu 2026 r. urzędnik odwiedził 190 mieszkańców.
+    - path: /41-miasto-rzeszow/1713-aktualnosci/130685.html
+      title: Rzeszowski urzędomat do odbioru dowodów rejestracyjnych
+      match: na odebranie dowodu rejestracyjnego jest 48 godzin
+      summary: Rzeszów uruchomił całodobowy odbiór dowodów rejestracyjnych przez urzędomat. Po otrzymaniu SMS-a od urzędu mieszkaniec ma 48 godzin na odbiór dokumentu.
+      problem: Odbiór dowodu rejestracyjnego był związany z godzinami pracy urzędu.
+      solution: Rzeszów uruchomił całodobowy odbiór dowodu rejestracyjnego. Mieszkaniec wybiera urzędomat przy złożeniu dokumentów, a po umieszczeniu w nim dowodu urząd wysyła SMS.
+      evidence: Urząd udostępnił odbiór 24 godziny na dobę, 7 dni w tygodniu. Po otrzymaniu zawiadomienia mieszkaniec ma 48 godzin na odbiór.
+    - path: /41-miasto-rzeszow/1713-aktualnosci/90169-za-posrednictwem-aplikacji-szybko-zglosisz-miastu-problem.html
+      title: Zgłaszanie usterek przez aplikację Rzeszów To MY
+      match: po zgłoszeniu użytkownika aplikacji naprawiono także chodniki
+      problem: Mieszkańcy potrzebowali łatwego sposobu zawiadamiania miasta o usterkach w przestrzeni publicznej.
+      solution: Miasto włączyło przyjmowanie zgłoszeń o usterkach do aplikacji Rzeszów To MY, działającej od jesieni 2022 r.
+      evidence: Po zgłoszeniach mieszkańców miasto zamontowało zjazdy dla wózków przy schodach w okolicy ulic Bieckiej i Baligrodzkiej oraz naprawiło chodniki.
+
+- id: rzeszow
+  name: Gmina Miasto Rzeszów
+  publisher: Centrum Innowacji Miejskich – Urban Lab Rzeszów
+  kind: jst
+  city: Rzeszów
+  origin: https://urbanlab.erzeszow.pl
+  indexes: [/1557-aktualnosci/28223-aktualnosci.html]
+  articles:
+    - path: /1557-aktualnosci/28223-aktualnosci/75289-wizyta-studyjna-zespolu-campus-living-lab.html
+      title: Ogród społeczny na podstawie projektu z Minecrafta
+      match: ogród społeczny, który powstał
+      summary: Przy Szkole Podstawowej nr 25 w Rzeszowie powstał ogród owocowo-warzywny. Urban Lab zrealizował pomysł ucznia opracowany w Minecrafcie.
+      problem: Centrum Innowacji Miejskich szukało sposobów na wdrażanie pomysłów mieszkańców i włączanie społeczności szkolnej w działania lokalne.
+      solution: W ramach działań Urban Lab przy Szkole Podstawowej nr 25 w Rzeszowie zrealizowano projekt ogrodu społecznego opracowany przez ucznia w Minecrafcie.
+      evidence: Przy szkole powstał ogród owocowo-warzywny oparty na cyfrowym projekcie uczniowskim. Istniejący ogród pokazano podczas wizyty studyjnej.
+    - path: /1557-aktualnosci/28223-aktualnosci/54808-nabor-do-rzeszow-to-my.html
+      match: rozpoczął się iii nabór pomysłów
+      reject: Ogłoszenie naboru bez opisu zastosowania zgłoszonego pomysłu.
+
+- id: krosno
+  name: Gmina Miasto Krosno
+  kind: jst
+  city: Krosno
+  origin: https://www.krosno.pl
+  indexes: [/aktualnosci]
+  articles:
+    - path: /aktualnosci/centrum-aktywnosci-mlodziezy-w-krosnie-co-to-jest-,19017
+      title: Centrum Aktywności Młodzieży w Krośnie
+      match: przestrzeń kreowana dla młodzieży
+      problem: Młodzi mieszkańcy chcieli angażować się w życie miasta, ale potrzebowali miejsca do spotkań, działania i wsparcia.
+      solution: Miasto wspólnie z młodzieżą utworzyło Centrum Aktywności Młodzieży w projekcie Sami o sobie. Centrum oferuje otwartą przestrzeń do inicjatyw społecznych i artystycznych, warsztaty oraz wsparcie tutorskie.
+      evidence: Centrum powstało i przyjmuje uczestników bez zgody szkoły czy rodziców. Do dyspozycji są m.in. sala warsztatowa, przestrzeń spotkań oraz sala ze sceną.
+    - path: /dla-mieszkancow/gospodarka-komunalna/nasze-smieci/segregacja-odpadow/punkt-selektywnej-zborki-odpadow---pszok
+      title: Kącik Rzeczy Używanych w krośnieńskim PSZOK
+      match: na terenie pszok funkcjonuje kącik rzeczy używanych
+      summary: W krośnieńskim PSZOK mieszkańcy mogą przekazywać sprawne przedmioty do ponownego użycia. Obsługa kwalifikuje rzeczy, a inni mieszkańcy mogą je odebrać.
+      problem: Sprawne rzeczy oddawane w PSZOK mogą trafić do przetworzenia mimo możliwości dalszego użytkowania.
+      solution: Miasto i Krośnieński Holding Komunalny wydzieliły w PSZOK stanowisko ponownego użycia. Obsługa kwalifikuje przedmioty, udostępnia je do odbioru i publikuje ofertę w portalu.
+      evidence: W działającym punkcie mieszkańcy mogą zostawiać rzeczy w dobrym stanie i odbierać zakwalifikowane przedmioty, np. rowery, meble lub książki. Oferta przedmiotu jest publikowana na okres do 3 miesięcy.
+    - path: '/aktualnosci/mlodziezowe-innowacje-w-krosnie-podsumowanie-mini-hackathonu-poznaj-dotacje-na-innowacje,29634'
+      match: podczas ii edycji mini-hackathonu
+      reject: Relacja z prezentacji pomysłów bez potwierdzenia wdrożenia opisywanych rozwiązań.
+
+- id: srogow
+  name: Szkoła Podstawowa w Srogowie Górnym
+  kind: szkola
+  city: Srogów Górny
+  origin: https://sp.srogow.szkolnastrona.pl
+  indexes: ['/p,129,innowacje-pedagogiczne']
+  articles:
+    - path: '/a,951,innowacja-pedagogiczna-matematyka-i-programowanie'
+      match: podsumowaniem działań uczestników innowacji będzie
+      reject: Opis programu Scratch i planowanej publikacji prac, bez relacji o tym, co uczniowie wykonali.

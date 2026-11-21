@@ -9,7 +9,7 @@ export default function SimilarPanel({ innovation }: { innovation: InnovationFul
 
   return (
     <Card className="space-y-3 p-5">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Podobne rozwiązania</h2>
+      <h2 className="technical-label">Podobne rozwiązania</h2>
       {similar.isPending && <Loading label="Porównuję z radarem…" />}
       {similar.error && (
         <>

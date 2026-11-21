@@ -1,0 +1,79 @@
+interreg:
+  PLSK.01.01-IP.01-0018/23:
+    lead: Gmina Rymanów
+    title: Carpathian Rescue — mapa zagrożeń dla pogranicza
+    match: aplikacji mobilnej
+    url: https://plsk.eu/projekty/bezpieczne-pogranicze-bezpieczn-ludnosc/
+    evidence_match: stworzono dwujęzyczną aplikację mobilną
+    problem: Służby po obu stronach granicy korzystały z różnych sposobów reagowania i ostrzegania.
+    solution: Dwujęzyczna aplikacja łączy mapę zagrożeń dla służb, statystyki oraz materiały o bezpieczeństwie dla mieszkańców.
+    evidence: Gminy Rymanów i Kračúnovce udostępniły aplikację Carpathian Rescue. Program Interreg opisał również przeszkolenie ponad 200 strażaków w ramach projektu.
+    recipients: Mieszkańcy i służby ratunkowe pogranicza polsko-słowackiego
+    kind: technologiczna
+    stage: wdrozona
+    domains: [bezpieczenstwo, administracja, cyfryzacja_ict]
+  PLSK.01.01-IP.01-0001/23:
+    lead: Gmina Kęty
+    title: Zarządzanie kryzysowe bez granic — wspólne procedury ratownicze
+    match: zarządzania kryzysowego
+    url: https://plsk.eu/projekty/zarzadzanie-kryzysowe-bez-granic/
+    evidence_match: opracowano kompleksowy dokument określający zasady współdziałania służb ratowniczych
+    problem: Różnice w procedurach i wyposażeniu utrudniały wspólną reakcję na zagrożenia po obu stronach granicy.
+    solution: Kęty i Turzovka przygotowały wspólną strategię dla służb ratowniczych oraz ćwiczenia oparte na scenariuszach powodzi i poszukiwań.
+    evidence: Partnerzy opracowali dokument współdziałania podczas klęsk żywiołowych, a ratownicy z obu krajów przećwiczyli wspólne działania.
+    recipients: Służby ratownicze z Kęt i Turzovki
+    kind: organizacyjna
+    stage: wdrozona
+    domains: [bezpieczenstwo, administracja]
+  PLSK.02.01-IP.01-0014/23:
+    lead: Gmina Solina
+    title: Bieszczadzka elektromobilność — wypożyczanie e-rowerów
+    match: ogólnodostępnych rowerów elektrycznych
+    url: https://plsk.eu/rowerowe-swieto-w-sercu-bieszczad-wspolna-jazda-integracja-i-elektromobilnosc/
+    evidence_match: dzięki możliwości wypożyczenia rowerów elektrycznych
+    problem: W górskich gminach samochód pozostaje podstawowym środkiem transportu, a wzniesienia utrudniają jazdę na zwykłym rowerze.
+    solution: Gminy pogranicza testują publiczne wypożyczanie e-rowerów. Wykaz projektu przewiduje także stojaki z ładowaniem i aplikację.
+    evidence: Podczas festiwalu w Polańczyku i Cisnej w maju 2026 r. działała możliwość wypożyczenia rowerów elektrycznych. Około 500 osób uczestniczyło w rajdach ogółem.
+    recipients: Mieszkańcy i turyści w gminach pogranicza bieszczadzkiego
+    kind: organizacyjna
+    stage: pilotaz
+    domains: [transport_mobilnosc, energia_srodowisko]
+ncbr:
+  airly:
+    title: Airly — monitoring jakości powietrza dla mieszkańców
+    match: w całej Polsce rozmieściliśmy już ponad 2 800 czujników AIRLY
+    problem: Mieszkańcy potrzebują informacji o jakości powietrza w swojej okolicy i możliwości sprawdzenia prognozy.
+    solution: Stacje Airly mierzą zanieczyszczenie powietrza. Wyniki i prognozy są dostępne w aplikacji, która wysyła też powiadomienia.
+    evidence: NCBR podaje ponad 2800 czujników rozmieszczonych w Polsce i ponad 500 tys. pobrań publicznej aplikacji w czasie opisywanym na stronie.
+    recipients: Mieszkańcy korzystający z publicznej mapy i aplikacji
+    organization_kind: firma
+    kind: technologiczna
+    stage: skalowana
+    domains: [energia_srodowisko, zdrowie, cyfryzacja_ict]
+  swiat-odkrywcow-odkrywanie-swiata--nowatorski-program-rozwoju-kompetencji-i-pobudzenia-aktywnosci-edukacyjnej-i-kulturalnej-dla-dzieci-szkol-podstawowych:
+    title: Świat odkrywców — edukacja terenowa i laboratoryjna dla szkół
+    match: 132 osoby
+    problem: Uczniowie szkół podstawowych mają ograniczony dostęp do infrastruktury potrzebnej do praktycznej nauki przyrody.
+    solution: Uniwersytet Wrocławski połączył pracę laboratoryjną, warsztaty i zajęcia terenowe w pięciodniowych edycjach programu.
+    evidence: W czterech edycjach w latach 2019–2021 uczestniczyły 132 osoby z czterech szkół podstawowych powiatu oleśnickiego. Uczelnia dalej wykorzystywała scenariusze m.in. podczas Nocy Biologów.
+    recipients: Uczniowie w wieku 11–15 lat ze szkół podstawowych w Sycowie, Sokołowicach i Oleśnicy
+    organization_kind: uczelnia
+    kind: edukacyjna
+    stage: wdrozona
+    domains: [edukacja]
+  laboratorium-edukacji-przyszlosci:
+    title: Laboratorium Edukacji Przyszłości — przygotowanie przyszłych nauczycieli
+    match: tutoringu akademickiego i tworzenia indywidualnego portfolio
+    problem: Program kształcenia wymagał połączenia przygotowania akademickiego z praktyką edukacji przedszkolnej i wczesnoszkolnej.
+    solution: Wydział Pedagogiczny UW włączył do studiów m.in. tutoring akademicki i indywidualne portfolio, a podczas zajęć stosował też metody pracy w przedszkolu.
+    evidence: Część opracowanego programu wprowadzono na studiach II stopnia, a bieżąca ewaluacja służyła do poprawiania i ponownego testowania programu w kolejnych edycjach.
+    recipients: Studenci przygotowujący się do zawodu nauczyciela oraz nauczyciele współpracujący z wydziałem
+    organization_kind: uczelnia
+    kind: edukacyjna
+    stage: wdrozona
+    domains: [edukacja]
+crossref:
+  10.3390/atmos16101201:
+    project_ref: airly
+    evidence: W sekcjach 2.1–2.2 autorzy podają, że analizowali pomiary z 82 czujników Airly w Krakowie i sąsiednich gminach. Dane pobrali przez REST API Airly.
+    evidence_url: https://www.mdpi.com/2073-4433/16/10/1201#sec2-atmosphere-16-01201

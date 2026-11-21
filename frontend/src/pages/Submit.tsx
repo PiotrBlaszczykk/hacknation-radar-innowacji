@@ -89,10 +89,10 @@ export default function Submit() {
   ] as const
 
   return (
-    <form onSubmit={submit} className="mx-auto max-w-2xl">
-      <Card className="space-y-5 p-6">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900">Zgłoś innowację</h1>
+    <form onSubmit={submit} className="mx-auto max-w-3xl">
+      <Card className="space-y-5 p-4 sm:p-6">
+        <div className="border-b border-slate-200 pb-4 sm:pb-5">
+          <h1 className="page-title">Zgłoś innowację</h1>
           {persona && (
             <p className="mt-1 text-sm text-slate-500">
               Zgłaszasz jako {persona.name}{persona.organization && ` (${persona.organization.name})`}.

@@ -7,7 +7,7 @@ export function cx(...parts: (string | false | null | undefined)[]) {
 }
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cx('rounded-xl border border-slate-200 bg-white shadow-sm', className)} {...props} />
+  return <div className={cx('rounded-xl border border-slate-200 bg-surface', className)} {...props} />
 }
 
 const tones = {
@@ -23,7 +23,7 @@ export type Tone = keyof typeof tones
 
 export function Badge({ tone = 'slate', children }: { tone?: Tone; children: ReactNode }) {
   return (
-    <span className={cx('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium', tones[tone])}>
+    <span className={cx('inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-semibold leading-relaxed', tones[tone])}>
       {children}
     </span>
   )
@@ -33,15 +33,15 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primar
 
 export function Button({ variant = 'primary', className, ...props }: ButtonProps) {
   const variants = {
-    primary: 'bg-brand-600 text-white hover:bg-brand-700',
-    secondary: 'border border-slate-300 bg-white text-slate-800 hover:bg-slate-50',
-    ghost: 'text-slate-600 hover:bg-slate-100',
+    primary: 'bg-brand-600 text-ink hover:bg-brand-700 active:bg-brand-500',
+    secondary: 'border border-control bg-surface text-slate-900 hover:border-slate-500 hover:bg-slate-50',
+    ghost: 'text-slate-700 hover:bg-slate-100 hover:text-slate-900',
   }
   return (
     <button
       className={cx(
-        'inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
-        'disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex items-center min-h-10 justify-center gap-2 rounded-sm px-4 py-2 text-sm font-semibold transition-colors',
+        'disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-500',
         variants[variant],
         className,
       )}
@@ -61,7 +61,7 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 }
 
 export const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100'
+  'min-h-11 w-full rounded-sm border border-control bg-canvas px-3 py-2 text-base text-slate-900 focus:border-brand-500'
 
 export function ChipSelect({
   options,
@@ -83,10 +83,10 @@ export function ChipSelect({
             aria-pressed={active}
             onClick={() => onChange(active ? value.filter((k) => k !== option.key) : [...value, option.key])}
             className={cx(
-              'rounded-full border px-3 py-1 text-sm transition-colors',
+              'min-h-9 rounded-sm border px-3 py-1 text-sm transition-colors',
               active
                 ? 'border-brand-500 bg-brand-50 text-brand-700'
-                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
+                : 'border-control bg-surface text-slate-700 hover:bg-slate-50',
             )}
           >
             {option.label}
@@ -98,10 +98,12 @@ export function ChipSelect({
 }
 
 export function Loading({ label = 'Ładowanie…' }: { label?: string }) {
-  return <p className="py-10 text-center text-sm text-slate-500">{label}</p>
+  return <p role="status" className="border-y border-slate-200 px-4 py-6 text-sm text-slate-600">{label}</p>
 }
 
 export function ErrorNote({ error }: { error: unknown }) {
-  const message = error instanceof Error ? error.message : 'Coś poszło nie tak'
-  return <p className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700">{message}</p>
+  const message = error instanceof TypeError
+    ? 'Nie udało się połączyć z serwerem. Spróbuj ponownie.'
+    : error instanceof Error ? error.message : 'Wystąpił błąd. Spróbuj ponownie.'
+  return <p role="alert" className="wrap-anywhere rounded-sm border border-rose-700/35 bg-rose-50 px-4 py-3 text-sm text-rose-700">{message}</p>
 }

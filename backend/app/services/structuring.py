@@ -90,50 +90,47 @@ QUESTIONS = {
 
 FALLBACK_THRESHOLDS = {"domains": 0.85, "support_needs": 0.95}
 
+STRUCTURING_VERSION = "2"
 TEXT_LIMITS = {"title": 140, "summary": 320, "problem": 420, "solution": 520, "results": 420}
-QUESTION_TEMPLATES = {
-    "results": "Ile osób skorzystało z rozwiązania „{title}” i po czym poznaliście jego efekty?",
-    "problem": "Co sprawiało trudność odbiorcom, zanim pojawiło się rozwiązanie „{title}”?",
-    "solution": "Co musi zrobić inna organizacja, żeby zastosować rozwiązanie „{title}”?",
-    "stage": "Gdzie i z kim udało się już wypróbować rozwiązanie „{title}”?",
-    "support_needs": "Jakiego wsparcia potrzebujecie w kolejnym kroku projektu „{title}”?",
-    "summary": "Na czym polega rozwiązanie „{title}” i kto z niego korzysta?",
-    "kind": "Co przede wszystkim zmieniło się po wprowadzeniu rozwiązania „{title}”?",
-    "domains": "W jakiej dziedzinie chcecie wykorzystać rozwiązanie „{title}”?",
-    "keywords": "Po jakich hasłach inni powinni znaleźć rozwiązanie „{title}”?",
-}
 TEXT_SCHEMA = {
     "type": "object",
     "properties": {
         **{field: {"type": "string", "maxLength": limit} for field, limit in TEXT_LIMITS.items()},
         "keywords": {"type": "array", "maxItems": 6, "items": {"type": "string", "maxLength": 56}},
         "questions": {
-            "type": "object",
-            "properties": {
-                field: {"type": "string", "maxLength": 180}
-                for field in ("results", "problem", "solution")
-            },
-            "required": ["results", "problem", "solution"],
-            "additionalProperties": False,
+            "type": "array",
+            "maxItems": 3,
+            "items": {"type": "string", "maxLength": 180},
         },
     },
     "required": [*TEXT_LIMITS, "keywords", "questions"],
     "additionalProperties": False,
 }
 SYSTEM_PROMPT = """Tworzysz kartę po polsku wyłącznie na podstawie materiału źródłowego.
-title: krótka nazwa. summary: 1–2 zdania, na czym polega działanie i dla kogo lub po co je podjęto.
-Jeśli źródło opisuje plan, zacznij od „Projekt ma…” lub „Zespół planuje…”. Unikaj ocen i języka reklamowego.
-problem: opisana trudność przed zmianą. solution: konkretne działanie. results: tylko zaobserwowany efekt
-albo wynik pomiaru, zacytowany ze źródła. Cel, czas trwania i samo przeprowadzenie testu to nie wyniki.
-Gdy brakuje przesłanki, zwróć "". Dotyczy to także przypadku, gdy łatwo się domyślić problemu lub efektu.
-Liczby zachowaj w zapisie ze źródła. Pomijaj skróty liczbowe i nie przeliczaj wartości.
-Liczba zdarzeń bez porównania nie oznacza wzrostu ani spadku.
-W ogłoszeniu podaj w summary, czego dotyczy informacja. Pola problem, solution i results zostaw puste.
-Przykład materiału: „Od marca wypożyczamy wiertarki na kartę”. summary: „Biblioteka wypożycza wiertarki na kartę”
-tylko jeśli źródło wskazuje bibliotekę, w pozostałych przypadkach „Wiertarki są wypożyczane na kartę”. problem i results: "".
-keywords: do sześciu haseł ze źródła. questions: dla każdego pustego pola results, problem i solution napisz
-po jednym pytaniu z konkretem ze źródła, a dla uzupełnionego pola wpisz "". Np. dla wiertarek i pustego results:
-"Ile wiertarek wypożyczono od marca i ilu osobom?"."""
+title: krótka nazwa. summary: 1–2 zdania o działaniu i odbiorcach. Liczbowe efekty zapisz w results.
+solution: konkretne działanie, opisz jego mechanizm. Jeśli działanie jest planowane, powiedz to wprost w summary i solution.
+problem: skopiuj ze źródła zdanie lub fragment opisujący trudność przed zmianą, również jeśli jest w środku zdania.
+results: skopiuj całe zdania źródłowe opisujące zaobserwowane efekty lub pomiary, także brak zmiany.
+Przepisuj dokładnie liczby, jednostki, kierunek i porównanie. Cel, przewidywanie i samo przeprowadzenie próby pomiń w results.
+Gdy źródło nie podaje problemu, mechanizmu lub wyników, wpisz "" w odpowiednie pole.
+Przy zwykłym ogłoszeniu wypełnij title, summary i keywords, a problem, solution i results zostaw puste.
+keywords: do sześciu haseł ze źródła.
+questions: lista od zera do trzech różnych pytań do twórcy. W każdym nazwij czynność, element rozwiązania lub odbiorców ze źródła
+i zapytaj o jedną rzecz, której opis nie wyjaśnia. Jeśli wynik jest podany, można zapytać o sposób pomiaru lub okres obserwacji.
+Przykład: dla „Od marca wypożyczamy wiertarki na kartę” zapytaj „Ile wiertarek wypożyczono od marca?”.
+Pomiń pytania ogólne, pytania z odpowiedzią w źródle i pytania o zakończone wdrożenie w przypadku planu.
+Dla ogłoszenia albo gdy nie ma konkretnej luki, zwróć []."""
+
+FOLLOW_UP_PROMPT = """Jesteś brokerem innowacji. Zadaj autorowi jedno konkretne pytanie po polsku.
+W pytaniu nazwij mechanizm lub odbiorców z opisu i poproś o szczegół, którego brakuje.
+Jeśli opis podaje skuteczność, możesz zapytać, jak ją obliczono. Przy planie pytaj o planowany sposób działania.
+Przykład pytania: Jak długo czytelnicy biblioteki mogą zatrzymać wypożyczone wiertarki?"""
+FOLLOW_UP_SCHEMA = {
+    "type": "object",
+    "properties": {"question": {"type": "string", "minLength": 18, "maxLength": 180}},
+    "required": ["question"],
+    "additionalProperties": False,
+}
 
 PLACEHOLDERS = {
     "", "-", "–", "—", "brak", "brak danych", "brak informacji", "brak wyników",
@@ -146,8 +143,58 @@ ABSENT_IN_SOURCE = re.compile(
     r"|(?:odnotowane )?(?:efekty|wyniki|dane) nie (?:są|zostały) podane"
     r"|trudność w opisaniu problemu [-–—] brak"
 )
-NUMBER = re.compile(r"(?<!\w)\d+(?:[.,]\d+)*(?!\w)")
-GENERIC_QUESTION = re.compile(r"^(?:czy (?:możesz|możecie) (?:coś więcej|powiedzieć więcej)|podaj(?:cie)? więcej)", re.I)
+SOURCE_BREAK = re.compile(
+    r"(?<=[.!?])\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ„])|[\n;]+"
+    r"|(?:,\s*|\s+)(?:a|ale|i|zaś)\s+(?=(?:\w+\s+){0,2}(?:planuj|chcemy|zamierza|docelowo|będzie))"
+)
+QUANTITY = re.compile(
+    r"\d|\b(?:połow\w*|ćwier[ćc]\w*|jedn(?:a|ą|ej)\s+trzeci\w*|"
+    r"dwie\s+trzeci\w*|pię[ćc]\w*|sześć|siedem|osiem|dziewięć|dziesięć|sto|tysiąc\w*|"
+    r"dwa|dwie|dwóch|dwu|trzy|trzech|cztery|czterech|\w+naście|\w+nastu|"
+    r"\w+dziesiąt|\w+set|milion\w*|miliard\w*)\b",
+    re.I,
+)
+PROBLEM_CUE = re.compile(
+    r"\b(?:wcześniej|dotąd|przed wdrożeniem|problemem był\w*|problem polegał|"
+    r"musieli\w*|mieli\w* trudności|bał\w* się|długo czeka(?:li|ły|ła|ł|no) na)\b",
+    re.I,
+)
+MECHANISM_CUE = re.compile(
+    r"\b(?:wprowadz|uruchom|wdroż|wypożycz|prowadzą|rezerwuj|utworzy|zbudowa|opracowa|"
+    r"zastosow|wykorzyst|koryguj|umożliwia|wyposaży|działa|służy)\w*\b",
+    re.I,
+)
+RESULT_CUE = re.compile(
+    r"\b(?:spadł\w*|wzr[oó]s\w*|zmalał\w*|zwiększył\w*|zmniejszył\w*|"
+    r"skrócił\w*|wydłużył\w*|obniżył\w*|utrzymał\w*|nie zmienił\w*|"
+    r"odnotowali\w*|odnotowano|zaobserwowano|wykazał\w*|uzyskano|osiągnięto|"
+    r"zaobserwowali\w*|uzyskali\w*|osiągnęli\w*)\b",
+    re.I,
+)
+FUTURE_CUE = re.compile(
+    r"\b(?:planuj\w*|planowan\w*|chcemy|zamierza\w*|cel(?:em)? (?:\w+ ){0,2}(?:jest|będzie)|"
+    r"cel(?: \w+){0,3}:|"
+    r"docelowo|w przyszłości|"
+    r"oczekuj\w*|przewiduj\w*|spodziewa\w*|powinn\w*|miałby|mogłoby|"
+    r"będzie|będą|ma\w* (?:zmniejsz|zwiększ|skróci|obniż|poprawi|spaś|wzros|wynosi)\w*)(?=\W|$)",
+    re.I,
+)
+NO_RESULT_CUE = re.compile(
+    r"\b(?:nie (?:ma jeszcze|zebrano|zmierzono|badano|oceniono|znamy|mierzyli\w*|"
+    r"uzyskano (?:danych|wyników))|"
+    r"brak (?:danych|wyników|pomiarów))\b",
+    re.I,
+)
+GENERIC_QUESTION = re.compile(
+    r"^(?:czy (?:możesz|możecie|mógłbyś|moglibyście)\b|podaj(?:cie)? więcej\b|"
+    r"na czym polega\b|co było problemem\b|jakiego wsparcia potrzebujecie\b|jak (?:dokładnie )?działa\b)",
+    re.I,
+)
+QUESTION_STOP_WORDS = {
+    "było", "były", "jakie", "jaki", "który", "które", "których", "oraz", "kiedy", "przez",
+    "przed", "tylko", "około", "bardzo", "jest", "jego", "tego", "opis", "wynik", "efekt",
+    "rozwi", "proje", "wdroż", "pilot", "możli", "korzy", "wpływ", "dział", "użytk", "osoby",
+}
 
 
 def _source_excerpt(text: str) -> str:
@@ -210,32 +257,96 @@ def _extract_tags(answers: dict) -> dict:
     return tags
 
 
-def _follow_up(raw: object, missing: list[str], title: str, excerpt: str) -> list[str]:
-    proposals = raw if isinstance(raw, dict) else {}
+def _segments(text: str) -> list[str]:
+    text = re.sub(r":[ \t]*\n\s*", ": ", text)
+    return [" ".join(segment.split()) for segment in SOURCE_BREAK.split(text) if segment.strip()]
+
+
+def _quote(proposal: str, source: str) -> str:
+    phrase = proposal.strip(' „”".!?,;:')
+    if not phrase:
+        return ""
+    match = re.search(rf"(?<!\w){re.escape(phrase)}(?!\w)", source, re.I)
+    return match.group() if match else ""
+
+
+def _collect_segments(segments: list[str], limit: int) -> str:
+    # Skracanie cytatu w połowie może odciąć jednostkę lub punkt odniesienia.
+    selected = []
+    remaining = limit
+    for segment in segments:
+        if segment and len(segment) <= remaining:
+            selected.append(segment)
+            remaining -= len(segment) + 1
+    return " ".join(selected)
+
+
+def _observed_results(proposal: str, segments: list[str]) -> str:
+    quotes = [part for part in _segments(proposal) if len(part.split()) >= 3]
+    evidence = [
+        segment for segment in segments
+        if not FUTURE_CUE.search(segment)
+        and not NO_RESULT_CUE.search(segment)
+        and (
+            (RESULT_CUE.search(segment) and not PROBLEM_CUE.search(segment))
+            or any(_quote(quote, segment) for quote in quotes)
+        )
+    ]
+    return _collect_segments(evidence, TEXT_LIMITS["results"])
+
+
+def _grounded_prose(proposal: str, source: str, limit: int) -> str:
+    return _collect_segments(
+        [segment for segment in _segments(proposal) if not QUANTITY.search(segment) or _quote(segment, source)],
+        limit,
+    )
+
+
+def _anchor_words(text: str) -> set[str]:
+    return {
+        word[:5] for word in re.findall(r"[^\W\d_]{4,}", text.casefold())
+        if word[:5] not in QUESTION_STOP_WORDS
+    }
+
+
+def _follow_up(raw: object, source: str, card: dict) -> list[str]:
+    if not isinstance(raw, list) or not card["solution"]:
+        return []
+    source_words = [_anchor_words(segment) for segment in _segments(source)]
+    anchors = set().union(*source_words)
     questions = []
-    subject = title.replace("„", "").replace("”", "")
-    subject = _clean(subject, 70) or title
-    templates = QUESTION_TEMPLATES.copy()
-    if re.search(r"\b(?:uczni|starszak|pierwszak)", excerpt, re.I):
-        templates["results"] = "Ilu uczniów wzięło udział w „{title}” i jak sprawdziliście, czego się nauczyli?"
-    if re.search(r"\bwypożycz\w*.*?\b(?:narzędzi|wiertar)", excerpt, re.I | re.S):
-        templates["results"] = "Ile wypożyczeń odnotowano w ramach „{title}” i w jakim okresie?"
-        templates["problem"] = "Do jakich prac mieszkańcy potrzebują narzędzi z projektu „{title}”?"
-    for field, template in templates.items():
-        if field not in missing:
-            continue
-        question = _clean(proposals.get(field), 180)
+    seen = set()
+    for proposal in raw:
+        question = _clean(proposal, 180)
+        key = question.casefold()
+        words = _anchor_words(question)
         if (
             not question.endswith("?")
-            or len(question.split()) < 6
+            or question.count("?") != 1
+            or len(question.split()) < 4
             or GENERIC_QUESTION.match(question)
-            or question in questions
+            or key in seen
+            or not anchors.intersection(words)
+            or (key.startswith("czy ") and any(words <= part for part in source_words))
         ):
-            question = template.format(title=subject)
+            continue
         questions.append(question)
+        seen.add(key)
         if len(questions) == 3:
             break
     return questions
+
+
+def _ask_follow_up(draft: dict, source: str, card: dict) -> list[str]:
+    questions = _follow_up(draft.get("questions"), source, card)
+    if questions or not card["solution"]:
+        return questions
+    try:
+        follow_up = llm.chat_json(FOLLOW_UP_PROMPT, source, FOLLOW_UP_SCHEMA, temperature=0)
+    except llm.LLMUnavailable:
+        return []
+    proposal = follow_up.get("question") if isinstance(follow_up, dict) else None
+    return _follow_up([proposal], source, card)
 
 
 def structure_text(text: str) -> dict:
@@ -248,27 +359,41 @@ def structure_text(text: str) -> dict:
 
     tags = _extract_tags(answers)
     card = {field: _clean(draft.get(field), limit) for field, limit in TEXT_LIMITS.items()}
-    source_numbers = set(NUMBER.findall(excerpt))
-    if not set(NUMBER.findall(card["results"])).issubset(source_numbers):
-        card["results"] = ""
-    if not set(NUMBER.findall(card["summary"])).issubset(source_numbers):
-        card["summary"] = ""
-        # Powtórz tylko streszczenie z tekstem pozbawionym liczb, które model próbował przeliczyć.
-        repair = llm.chat_json(
-            "Streść po polsku to, co zrobiono lub zaplanowano, w 1–2 zdaniach. "
-            "Korzystaj tylko z tekstu. Pomiń liczby i daty.",
-            re.sub(r"\(?\d[\d.,/:-]*(?:[kK](?!\w))?\)?", "", excerpt),
-            {
-                "type": "object",
-                "properties": {"summary": TEXT_SCHEMA["properties"]["summary"]},
-                "required": ["summary"],
-                "additionalProperties": False,
-            },
-            temperature=0,
+    segments = _segments(excerpt)
+    source = " ".join(excerpt.split())
+    card["problem"] = next(
+        (part for part in segments if len(part) <= TEXT_LIMITS["problem"] and PROBLEM_CUE.search(part)),
+        _quote(card["problem"], source),
+    )
+    mechanism = next(
+        (
+            part for part in segments
+            if len(part) <= TEXT_LIMITS["solution"] and MECHANISM_CUE.search(part)
+            and not RESULT_CUE.search(part) and not PROBLEM_CUE.search(part)
+        ),
+        "",
+    )
+    card["results"] = _observed_results(card["results"], segments)
+    if mechanism:
+        targets = [
+            part for part in segments if part != mechanism and QUANTITY.search(part)
+            and FUTURE_CUE.search(part) and not NO_RESULT_CUE.search(part)
+        ]
+        card["solution"] = _collect_segments([mechanism, *targets], TEXT_LIMITS["solution"])
+        if FUTURE_CUE.search(mechanism):
+            card["summary"] = mechanism
+    else:
+        card["solution"] = _grounded_prose(card["solution"], source, TEXT_LIMITS["solution"])
+    summary = _grounded_prose(card["summary"], source, TEXT_LIMITS["summary"])
+    if not summary or len(summary) < len(card["summary"]):
+        opening = summary or card["solution"] or (segments[0] if segments else "")
+        summary = _collect_segments(
+            [opening, *_segments(card["results"])], TEXT_LIMITS["summary"]
         )
-        summary = _clean(repair.get("summary"), TEXT_LIMITS["summary"]) if isinstance(repair, dict) else ""
-        if not NUMBER.search(summary):
-            card["summary"] = summary
+        summary = summary or _clean(opening, TEXT_LIMITS["summary"])
+    card["summary"] = summary
+    if QUANTITY.search(card["title"]) and not _quote(card["title"], source):
+        card["title"] = ""
     keywords = draft.get("keywords")
     card["keywords"] = list(dict.fromkeys(
         word for value in (keywords if isinstance(keywords, list) else []) if (word := _clean(value, 56))
@@ -282,9 +407,10 @@ def structure_text(text: str) -> dict:
     return {
         "card": card,
         "tags": tags,
-        "is_innovation": _probability(innovation.get("noul")) or 0.0,
+        "is_innovation": _probability(innovation.get("noul")),
         "missing": missing,
-        "questions": _follow_up(draft.get("questions"), missing, card["title"], excerpt),
+        "questions": _ask_follow_up(draft, excerpt, card),
+        "version": STRUCTURING_VERSION,
         "engine": {
             "tags": innovation.get("engine") or answers.get("kind", {}).get("engine", ""),
             "text": current_app.config["LLM_MODEL"],

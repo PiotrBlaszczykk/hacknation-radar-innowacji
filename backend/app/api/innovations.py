@@ -103,17 +103,26 @@ def create_innovation():
 
 @bp.patch("/innovations/<int:innovation_id>")
 def update_innovation(innovation_id: int):
-    innovation = db.get_or_404(Innovation, innovation_id)
     data = json_body()
-    _validate(data)
     user = current_user()
+    edits_status = "status" in data
+    if edits_status and (user is None or user.role != "broker"):
+        abort(403, "Tylko broker może zmienić status innowacji.")
+    _validate(data)
+    status = data.get("status")
+    if status is not None and (not isinstance(status, str) or status not in domain.STATUSES):
+        abort(400, "Wybierz poprawny status innowacji.")
 
-    for key in EDITABLE:
-        if key in data:
-            setattr(innovation, key, data[key])
+    innovation = db.get_or_404(Innovation, innovation_id, with_for_update=True)
 
-    if (status := data.get("status")) and status != innovation.status:
-        require_key(status, domain.STATUSES, "status")
+    changed = [key for key in EDITABLE if key in data and data[key] != getattr(innovation, key)]
+    for key in changed:
+        setattr(innovation, key, data[key])
+    if changed and innovation.origin == "radar":
+        raw = innovation.raw or {}
+        innovation.raw = {**raw, "manual_fields": sorted(set(raw.get("manual_fields", [])) | set(changed))}
+
+    if status is not None and status != innovation.status:
         innovation.events.append(
             Event(
                 type="status",

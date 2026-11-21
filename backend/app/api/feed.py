@@ -30,7 +30,7 @@ def get_feed():
     if tab == "dla_ciebie" and user is None:
         tab = "najnowsze"
 
-    filters = []
+    filters = [Innovation.status != "archiwum"]
     for name, options in (("kind", domain.INNOVATION_KINDS), ("stage", domain.STAGES), ("origin", domain.ORIGINS)):
         if value := request.args.get(name):
             require_key(value, options, name)
@@ -55,7 +55,9 @@ def get_feed():
 
     result = ranking.feed_page(tab, filters, user, vector, query, limit, offset)
     if tab == "perelki" and result["total"] == 0:
-        has_scores = db.session.scalar(select(select(Innovation.id).where(Innovation.score.is_not(None)).exists()))
+        has_scores = db.session.scalar(select(select(Innovation.id).where(
+            Innovation.score.is_not(None), Innovation.status != "archiwum",
+        ).exists()))
         if not has_scores:
             result["message"] = "Pierwsze perełki pojawią się, gdy innowacje otrzymają oceny potencjału."
     if notice:

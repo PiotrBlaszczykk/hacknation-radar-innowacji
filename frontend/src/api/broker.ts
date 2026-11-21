@@ -87,6 +87,7 @@ export function useMoveInnovation() {
         client.invalidateQueries({ queryKey: ['broker'], predicate: (query) => query.queryKey[1] !== 'duplicates' }),
         client.invalidateQueries({ queryKey: ['innovation', innovation.id] }),
         client.invalidateQueries({ queryKey: ['innovations'] }),
+        client.invalidateQueries({ queryKey: ['feed'] }),
       ])
     },
   })

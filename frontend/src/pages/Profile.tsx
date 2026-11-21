@@ -16,7 +16,7 @@ function ProfileForm({ profile }: { profile: User }) {
   return (
     <div className="space-y-4">
       <Card className="p-5 sm:p-6">
-        <h1 className="text-2xl font-semibold text-slate-900">Mój profil</h1>
+        <h1 className="page-title">Mój profil</h1>
         <dl className="mt-4 grid gap-4 sm:grid-cols-2">
           {[
             ['Imię i nazwisko', profile.name],

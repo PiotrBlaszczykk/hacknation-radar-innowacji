@@ -22,6 +22,7 @@ def chat_json(system: str, user: str, schema: dict, *, temperature: float = 0.1,
     payload = {
         "model": current_app.config["LLM_MODEL"],
         "stream": False,
+        "keep_alive": "2h",
         "format": schema,
         "options": {"temperature": temperature, "num_ctx": current_app.config["LLM_NUM_CTX"]},
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
@@ -37,7 +38,9 @@ def chat_json(system: str, user: str, schema: dict, *, temperature: float = 0.1,
 def embed(texts: list[str], *, timeout: float = 120) -> list[list[float]]:
     if not texts:
         return []
-    payload = {"model": current_app.config["EMBED_MODEL"], "input": texts}
+    # Bez keep_alive Ollama wyładowuje model po 5 minutach bezczynności i pierwsze wyszukiwanie
+    # po przerwie trwa 1,5-2 s zamiast 50 ms.
+    payload = {"model": current_app.config["EMBED_MODEL"], "input": texts, "keep_alive": "2h"}
     try:
         response = httpx.post(_url("/api/embed"), json=payload, timeout=timeout)
         response.raise_for_status()
