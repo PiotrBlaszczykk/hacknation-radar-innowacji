@@ -1,0 +1,217 @@
+from flask import Blueprint, jsonify
+from sqlalchemy import text
+
+from .. import domain
+from ..extensions import db
+
+bp = Blueprint("broker", __name__)
+
+LOW_CONFIDENCE = 0.35
+HIGH_SCORE = 75
+BOARD_LIMIT = 20
+
+LATEST_ASSESSMENTS = """
+    SELECT DISTINCT ON (innovation_id) innovation_id, total, confidence, items
+    FROM assessments
+    ORDER BY innovation_id, created_at DESC, id DESC
+"""
+
+APPROVED_PATHS = """
+    SELECT DISTINCT ON (innovation_id) innovation_id, payload->>'path' AS path
+    FROM events
+    WHERE type = 'rekomendacja_zatwierdzona' AND payload->>'path' IS NOT NULL
+    ORDER BY innovation_id, created_at DESC, id DESC
+"""
+
+
+def _rows(sql, **params):
+    return db.session.execute(text(sql), params).mappings()
+
+
+def _counts(rows, keys=()):
+    counts = dict.fromkeys(keys, 0)
+    counts.update((row["key"], row["total"]) for row in rows)
+    return counts
+
+
+@bp.get("/broker/summary")
+def summary():
+    counts = {
+        "origin": dict.fromkeys(domain.ORIGINS, 0),
+        "kind": dict.fromkeys(domain.INNOVATION_KINDS, 0),
+        "status": dict.fromkeys(domain.STATUSES, 0),
+    }
+    for row in _rows("""
+        SELECT 'origin' AS dimension, origin AS key, count(*) AS total FROM innovations GROUP BY origin
+        UNION ALL
+        SELECT 'kind', coalesce(kind, 'nieokreslona'), count(*) FROM innovations GROUP BY kind
+        UNION ALL
+        SELECT 'status', status, count(*) FROM innovations GROUP BY status
+    """):
+        counts[row["dimension"]][row["key"]] = row["total"]
+
+    assessments = _rows(f"""
+        WITH latest AS ({LATEST_ASSESSMENTS})
+        SELECT count(*) AS total,
+               avg(total) AS average_score,
+               count(*) FILTER (WHERE confidence < :low_confidence) AS low_confidence
+        FROM latest
+    """, low_confidence=LOW_CONFIDENCE).one()
+
+    paths = _counts(_rows(f"""
+        WITH approved AS ({APPROVED_PATHS})
+        SELECT path AS key, count(*) AS total FROM approved GROUP BY path
+    """), domain.PATHS)
+
+    matches = _counts(_rows("""
+        SELECT status AS key, count(*) AS total FROM matches GROUP BY status
+    """), domain.MATCH_STATUSES)
+    reach = _rows("""
+        SELECT (SELECT count(*) FROM innovations WHERE origin = 'radar' AND claimed) AS radar_claimed,
+               count(DISTINCT m.innovation_id) FILTER (WHERE m.status = 'kontakt') AS with_contact,
+               count(DISTINCT m.innovation_id)
+                   FILTER (WHERE i.origin = 'radar' AND m.status <> 'odrzucone') AS radar_matched
+        FROM matches m JOIN innovations i ON i.id = m.innovation_id
+    """).one()
+
+    organizations = _counts(_rows("""
+        SELECT o.kind AS key, count(DISTINCT o.id) AS total
+        FROM organizations o JOIN innovations i ON i.organization_id = o.id
+        GROUP BY o.kind
+    """), domain.ORG_KINDS)
+
+    medians = _rows("""
+        WITH starts AS (
+            SELECT innovation_id, min(created_at) AS started_at
+            FROM events
+            WHERE type IN ('wykryta', 'zgloszona')
+            GROUP BY innovation_id
+        ),
+        milestones AS (
+            SELECT s.innovation_id, s.started_at,
+                   min(e.created_at) FILTER (
+                       WHERE e.type = 'oceniona'
+                   ) AS assessed_at,
+                   min(e.created_at) FILTER (
+                       WHERE e.type = 'dopasowanie' AND e.payload->>'to' = 'kontakt'
+                   ) AS contact_at
+            FROM starts s
+            JOIN events e ON e.innovation_id = s.innovation_id AND e.created_at >= s.started_at
+            GROUP BY s.innovation_id, s.started_at
+        )
+        SELECT percentile_cont(0.5) WITHIN GROUP (
+                   ORDER BY extract(epoch FROM assessed_at - started_at) / 86400
+               ) AS to_assessment,
+               percentile_cont(0.5) WITHIN GROUP (
+                   ORDER BY extract(epoch FROM contact_at - started_at) / 86400
+               ) AS to_contact
+        FROM milestones
+    """).one()
+
+    return jsonify(
+        innovations={
+            "total": sum(counts["origin"].values()),
+            "by_origin": counts["origin"],
+            "by_kind": counts["kind"],
+            "by_status": counts["status"],
+            "radar_claimed": reach["radar_claimed"],
+        },
+        assessments=dict(assessments),
+        paths={"total": sum(paths.values()), "by_path": paths},
+        matches={
+            "by_status": matches,
+            "innovations_with_contact": reach["with_contact"],
+            "radar_innovations_matched": reach["radar_matched"],
+        },
+        median_days=dict(medians),
+        organizations={"total": sum(organizations.values()), "by_kind": organizations},
+    )
+
+
+@bp.get("/broker/board")
+def board():
+    columns = {
+        status: {"status": status, "items": [], "total": 0}
+        for status in domain.STATUSES if status != "archiwum"
+    }
+    rows = _rows(f"""
+        WITH ranked AS (
+            SELECT id, title, organization_id, origin, claimed, status, score,
+                   count(*) OVER (PARTITION BY status) AS total,
+                   row_number() OVER (
+                       PARTITION BY status ORDER BY score DESC NULLS LAST, id DESC
+                   ) AS position
+            FROM innovations
+            WHERE status <> 'archiwum'
+        ),
+        latest AS ({LATEST_ASSESSMENTS}),
+        approved AS ({APPROVED_PATHS})
+        SELECT r.id, r.title, r.origin, r.claimed, r.status, r.score, r.total,
+               CASE WHEN o.id IS NOT NULL THEN json_build_object('id', o.id, 'name', o.name) END AS organization,
+               coalesce(a.confidence < :low_confidence, false)
+                   OR a.items @> '[{{"missing": true}}]'::jsonb IS TRUE AS needs_review,
+               p.innovation_id IS NOT NULL AS has_path,
+               (SELECT count(*) FROM matches m WHERE m.innovation_id = r.id) AS matches_count,
+               (SELECT count(*) FROM interactions t
+                WHERE t.innovation_id = r.id AND t.type = 'zainteresowany')
+                   + (SELECT count(*) FROM matches m
+                      WHERE m.innovation_id = r.id AND m.status = 'zainteresowanie') AS interest_count
+        FROM ranked r
+        LEFT JOIN organizations o ON o.id = r.organization_id
+        LEFT JOIN latest a ON a.innovation_id = r.id
+        LEFT JOIN approved p ON p.innovation_id = r.id
+        WHERE r.position <= :board_limit
+        ORDER BY r.position
+    """, low_confidence=LOW_CONFIDENCE, board_limit=BOARD_LIMIT)
+
+    for row in rows:
+        item = dict(row)
+        column = columns[item["status"]]
+        column["total"] = item.pop("total")
+        column["items"].append(item)
+    return jsonify(columns=list(columns.values()))
+
+
+@bp.get("/broker/queue")
+def queue():
+    rows = _rows(f"""
+        WITH latest AS ({LATEST_ASSESSMENTS}),
+        proposed AS (
+            SELECT DISTINCT ON (innovation_id) innovation_id, id
+            FROM recommendations
+            ORDER BY innovation_id, created_at DESC, id DESC
+        ),
+        pending AS (
+            SELECT innovation_id, 'low_confidence' AS type,
+                   'Ocena ma niską pewność i wymaga sprawdzenia.' AS description,
+                   NULL::integer AS match_id, 2 AS priority
+            FROM latest WHERE confidence < :low_confidence
+            UNION ALL
+            SELECT r.innovation_id, 'path_approval',
+                   'Proponowana ścieżka czeka na zatwierdzenie.', NULL, 1
+            FROM proposed r
+            WHERE NOT EXISTS (
+                SELECT 1 FROM events e
+                WHERE e.innovation_id = r.innovation_id AND e.type = 'rekomendacja_zatwierdzona'
+                  AND e.payload @> jsonb_build_object('recommendation_id', r.id)
+            )
+            UNION ALL
+            SELECT m.innovation_id, 'match_interest',
+                   coalesce(o.name, 'Dopasowana organizacja') || ' zgłasza zainteresowanie i czeka na kontakt.',
+                   m.id, 0
+            FROM matches m
+            LEFT JOIN needs n ON n.id = m.need_id
+            LEFT JOIN organizations o ON o.id = coalesce(m.organization_id, n.organization_id)
+            WHERE m.status = 'zainteresowanie'
+            UNION ALL
+            SELECT id, 'unclaimed_profile',
+                   'Wysoko oceniony profil z radaru czeka na potwierdzenie przez twórcę.', NULL, 3
+            FROM innovations WHERE origin = 'radar' AND NOT claimed AND score >= :high_score
+        )
+        SELECT p.innovation_id, i.title, p.type, p.description, p.match_id
+        FROM pending p JOIN innovations i ON i.id = p.innovation_id
+        WHERE i.status <> 'archiwum'
+        ORDER BY p.priority, i.score DESC NULLS LAST, i.id, p.match_id
+    """, low_confidence=LOW_CONFIDENCE, high_score=HIGH_SCORE)
+    items = [dict(row) for row in rows]
+    return jsonify(items=items, total=len(items))

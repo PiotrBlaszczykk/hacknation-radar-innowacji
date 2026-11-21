@@ -1,0 +1,74 @@
+version: "1.1"
+criteria:
+  - key: problem
+    label: Waga i skala problemu
+    weight: 20
+    question: Jak poważne i jak powszechne są skutki opisanego problemu?
+    levels:
+      - Problem jest marginalny i praktycznie bez skutków dla odbiorców.
+      - Problem powoduje drobną, sporadyczną niedogodność w jednej grupie.
+      - Problem regularnie utrudnia działanie jednej grupy lub organizacji.
+      - Problem wyraźnie ogranicza wyniki lub dostęp do usług w określonej grupie.
+      - Problem ma poważne skutki i występuje w wielu grupach lub organizacjach.
+      - Problem ma rozległe, ciężkie skutki dla bezpieczeństwa, zdrowia, praw lub podstawowych usług.
+    missing_question: Ilu osób lub organizacji dotyczy problem i jakie są jego skutki?
+  - key: nowosc
+    label: Nowość rozwiązania
+    weight: 15
+    question: Co odróżnia podejście od typowej praktyki? Oceń zmianę sposobu działania i porównanie z alternatywami.
+    levels:
+      - Karta opisuje tę samą praktykę co zwykle, bez dostosowania.
+      - Drobna zmiana organizacyjna, techniczna lub formalna. Sposób działania pozostaje ten sam.
+      - Znana praktyka przeniesiona do innej grupy, miejsca lub zastosowania.
+      - Nietypowe połączenie znanych elementów zmienia konkretne kroki pracy. Karta nie porównuje go z bliską alternatywą.
+      - Karta porównuje rozwiązanie z istniejącą metodą tego samego problemu i wskazuje istotną różnicę w działaniu.
+      - Karta dokumentuje nowy mechanizm i wykazuje jego odmienność względem kilku bliskich alternatyw.
+    missing_question: Jakie podobne rozwiązania znacie i co Wasze podejście zmienia w praktyce?
+  - key: dowody
+    label: Dojrzałość i dowody skuteczności
+    weight: 20
+    question: Jak mocne są przedstawione dowody, że rozwiązanie przynosi zamierzony efekt?
+    levels:
+      - Opis wprost wskazuje, że pomysłu jeszcze nie sprawdzono lub próba wykazała brak efektu.
+      - Są obserwacje lub opinie z pierwszych prób, bez pomiaru wyników.
+      - Zebrano liczby dotyczące użycia lub działań, bez pomiaru zmiany u odbiorców.
+      - Zmierzono zamierzony efekt w rzeczywistych warunkach, z punktem odniesienia.
+      - Efekt zmierzono w porównywalnej grupie albo powtórzono pomiar efektu w kilku wdrożeniach.
+      - Niezależne badanie lub pomiary w różnych warunkach potwierdziły trwałą skuteczność.
+    missing_question: Co już sprawdziliście w praktyce i jakie wyniki uzyskaliście? Jeśli prób jeszcze nie było, napiszcie o tym.
+  - key: przenoszalnosc
+    label: Przenoszalność
+    weight: 20
+    question: Jak dużo zmian potrzebuje inna organizacja, aby zastosować ten sam sposób działania?
+    levels:
+      - Rozwiązanie zależy od unikatowych warunków, których inne organizacje nie mogą odtworzyć.
+      - Przeniesienie wymaga odtworzenia większości rozwiązania albo wyjątkowych lokalnych zasobów.
+      - Działa w podobnych instytucjach po znacznym dostosowaniu procesu lub zasobów.
+      - Rdzeń można zachować, dostosowując część procedur, materiałów lub narzędzi.
+      - Kroki, role i materiały można przejąć z niewielkimi zmianami w podobnej organizacji.
+      - Opisano gotowy do przejęcia sposób i pokazano jego zastosowanie w różnych organizacjach.
+    missing_question: Co inna organizacja może przejąć, a które kroki lub warunki musiałaby dostosować?
+  - key: wykonalnosc
+    label: Wykonalność dalszego wdrożenia
+    weight: 15
+    question: Jakie zasoby, koszty i bariery są potwierdzone dla kolejnego wdrożenia? Uwzględnij różnicę między wykonaną próbą a gotowością do kolejnego etapu.
+    levels:
+      - Wskazano barierę, która obecnie uniemożliwia wdrożenie.
+      - Dalszy krok zależy od trudnego do zdobycia finansowania, zgody lub kompetencji.
+      - Dalszy krok wymaga kilku istotnych zasobów lub uzgodnień, które trzeba dopiero zapewnić.
+      - Zasoby są osiągalne, a wdrożenie wymaga zaplanowania prac lub pojedynczych uzgodnień.
+      - Karta wskazuje dostępne zasoby do następnego wdrożenia i potwierdza, że pozostałe prace mieszczą się w zwykłych działaniach.
+      - Karta podaje potwierdzone zasoby, koszty i osobę lub jednostkę odpowiedzialną za następne wdrożenie.
+    missing_question: Jakich ludzi, środków, narzędzi lub zgód potrzebujecie do kolejnego wdrożenia?
+  - key: wplyw
+    label: Wpływ społeczny lub gospodarczy
+    weight: 10
+    question: Jak znaczącą i trwałą zmianę dla odbiorców można uzasadnić opisem rozwiązania?
+    levels:
+      - Nawet przy wdrożeniu przewidywana zmiana dla odbiorców jest znikoma.
+      - Spodziewana jest mała lub krótkotrwała korzyść dla nielicznych odbiorców.
+      - Rozwiązanie daje zauważalną korzyść w jednej grupie, ale w wąskim zakresie.
+      - Przewidywana jest istotna poprawa czasu, kosztu, dostępu lub jakości życia jednej grupy.
+      - Znacząca korzyść może się utrzymać i objąć kilka grup lub organizacji.
+      - Karta uzasadnia dużą, długotrwałą zmianę dla szerokiej grupy odbiorców lub całego systemu usług.
+    missing_question: Kto skorzysta z rozwiązania, czego będzie mógł oczekiwać i po czym poznacie tę zmianę?

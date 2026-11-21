@@ -1,0 +1,228 @@
+- id: pci-protolab
+  name: Pracownie PCI ProtoLab
+  provider: Podkarpackie Centrum Innowacji
+  description: Bezpłatna przestrzeń z wyposażeniem do prototypowania w Rzeszowie na zasadach regulaminu użytkownika.
+  audience: Osoby w wieku 16–30 lat mieszkające lub uczące się na Podkarpaciu oraz pracownicy naukowi spełniający kryterium z regulaminu.
+  organization_kinds: [szkola, uczelnia]
+  innovation_kinds: [technologiczna, edukacyjna]
+  stages: [pomysl, prototyp]
+  paths: [rozwoj]
+  region: podkarpackie
+  url: https://protolab.pcinn.org/assets/Protolab/Umowa%20ProtoLab.pdf
+  checked_at: '2026-11-21'
+  verified: true
+  after_step: 2
+  step_title: Sprawdź dostęp do stanowiska prototypowania
+  guidance: Zweryfikuj, kto z zespołu spełnia warunki użytkownika. Ustal z ProtoLabem, jakiego stanowiska potrzebujecie do wykonania lub poprawienia prototypu.
+
+- id: pci-preinkubacja
+  name: Preinkubacja PCI
+  provider: Podkarpackie Centrum Innowacji
+  description: Wsparcie w opracowaniu koncepcji oraz budowie funkcjonalnego prototypu produktu lub usługi.
+  audience: Uczniowie i studenci z Podkarpacia ze statusem użytkownika PCI ProtoLab.
+  organization_kinds: [szkola, uczelnia]
+  innovation_kinds: [technologiczna, edukacyjna, spoleczna]
+  stages: [pomysl]
+  paths: [rozwoj]
+  region: podkarpackie
+  url: https://pcinn.org/wp-content/uploads/2026/04/2026_04_22_Regulamin-programu-Preinkubacji.pdf
+  checked_at: '2026-11-21'
+  verified: true
+  after_step: 1
+  step_title: Sprawdź możliwość skorzystania z Preinkubacji
+  guidance: Jeśli projekt prowadzą uczniowie lub studenci, potwierdź w PCI terminy i uprawnienia. Przygotuj opis prototypu, jego funkcji i potrzebnych materiałów.
+
+- id: pci-granty-br
+  name: Program grantowy PCI na prace B+R
+  provider: Podkarpackie Centrum Innowacji
+  description: Finansowanie prac jednostek naukowych nad prototypami i technologiami o potencjale wdrożeniowym. Piąty nabór zakończył się 20 listopada 2026 r.
+  audience: Zespoły badawcze uczelni objętych regulaminem konkursu.
+  organization_kinds: [uczelnia]
+  innovation_kinds: [technologiczna]
+  stages: [pomysl, prototyp]
+  paths: [rozwoj]
+  region: podkarpackie
+  url: https://projekty.pcinn.org/konkurs-br-n5
+  checked_at: '2026-11-21'
+  verified: true
+  after_step: 1
+  step_title: Porównaj zakres projektu z programem grantowym PCI
+  guidance: Piąty nabór jest zamknięty. Użyj jego dokumentacji do sprawdzenia dojrzałości technologii i oszacowania kosztów dalszych prac B+R. Zapytaj PCI o kolejną edycję.
+
+- id: pci-protostarter
+  name: Protostarter PCI
+  provider: Podkarpackie Centrum Innowacji
+  description: ProtoLab opisuje program dla zespołów projektowych. Dostępność aktualnej edycji pozostaje do potwierdzenia.
+  audience: Zespoły projektowe. Szczegółowe warunki bieżącej edycji wymagają potwierdzenia.
+  organization_kinds: [szkola, uczelnia]
+  innovation_kinds: [technologiczna]
+  stages: [prototyp]
+  paths: [rozwoj]
+  region: podkarpackie
+  url: https://protolab.pcinn.org/
+  checked_at: '2026-11-21'
+  verified: false
+  after_step: 1
+  step_title: Zapytaj PCI o dostępność Protostartera
+  guidance: Przed planowaniem prac potwierdź, czy program przyjmuje zespoły i do których projektów jest skierowany.
+
+- id: ncbr-smart-konsorcja
+  name: Ścieżka SMART NCBR dla konsorcjów
+  provider: Narodowe Centrum Badań i Rozwoju
+  description: Finansowanie projektów B+R realizowanych wspólnie. Konsorcjum prowadzi przedsiębiorstwo.
+  audience: Przedsiębiorstwa jako liderzy. Organizacje badawcze i NGO mogą uczestniczyć jako konsorcjanci na zasadach naboru.
+  organization_kinds: [firma, uczelnia, ngo]
+  innovation_kinds: [technologiczna, procesowa]
+  stages: [prototyp, pilotaz]
+  paths: [rozwoj, transfer]
+  url: https://www.gov.pl/web/ncbr/sciezka-smart---projekty-realizowane-w-konsorcjach
+  checked_at: '2026-11-21'
+  verified: true
+  after_step: 2
+  step_title: Zweryfikuj możliwość wspólnych prac B+R z firmą
+  guidance: Jeśli po dotychczasowych testach pozostały zadania B+R, ustal ich podział z potencjalnym liderem biznesowym i sprawdź dokumentację właściwego naboru.
+
+- id: parp-smart-br
+  name: Ścieżka SMART PARP na projekty B+R
+  provider: Polska Agencja Rozwoju Przedsiębiorczości
+  description: Wsparcie prac rozwojowych lub badań przemysłowych połączonych z pracami rozwojowymi.
+  audience: Mikro-, małe i średnie przedsiębiorstwa.
+  organization_kinds: [firma]
+  innovation_kinds: [technologiczna, procesowa]
+  stages: [pomysl, prototyp, pilotaz]
+  paths: [rozwoj]
+  url: https://www.parp.gov.pl/component/grants/grants/sciezka-smart
+  checked_at: '2026-11-21'
+  verified: true
+  after_step: 1
+  step_title: Sprawdź finansowanie prac B+R dla MŚP
+  guidance: Jeśli firma ma status MŚP, porównaj plan badań, koszty i spodziewane wyniki z dokumentacją i terminami naboru.
+
+- id: parp-smart-wdrozenie
+  name: Ścieżka SMART PARP na wdrożenie wyników B+R
+  provider: Polska Agencja Rozwoju Przedsiębiorczości
+  description: Wsparcie inwestycji wdrażających wyniki zakończonych prac B+R, do których wnioskodawca ma prawa.
+  audience: Mikro-, małe i średnie przedsiębiorstwa z udokumentowanymi wynikami prac B+R.
+  organization_kinds: [firma]
+  innovation_kinds: [technologiczna, procesowa]
+  stages: [pilotaz, wdrozona, skalowana]
+  paths: [komercjalizacja]
+  url: https://www.parp.gov.pl/component/grants/grants/sciezka-smart---nabor-projektow-dotyczacych-wdrozenia-wynikow-prac-b-r
+  checked_at: '2026-11-21'
+  verified: true
+  after_step: 2
+  step_title: Zbadaj możliwość finansowania inwestycji wdrożeniowej
+  guidance: Przygotuj wyniki zakończonych prac B+R i dokumentację praw. Jeśli firma jest MŚP, sprawdź aktualną dokumentację i harmonogram PARP.
+
+- id: uprp-zgloszenie
+  name: Zgłoszenie wynalazku lub wzoru użytkowego
+  provider: Urząd Patentowy RP
+  description: Krajowa procedura ubiegania się o patent na wynalazek albo o prawo ochronne na wzór użytkowy.
+  audience: Uprawnione osoby lub podmioty zamierzające chronić rozwiązanie techniczne.
+  organization_kinds: [szkola, uczelnia, firma, jst, instytucja_publiczna, ngo, iob, inwestor]
+  innovation_kinds: [technologiczna]
+  stages: [pomysl, prototyp, pilotaz, wdrozona, skalowana]
+  paths: [rozwoj, transfer, komercjalizacja]
+  url: https://uprp.gov.pl/pl/przedmioty-ochrony/wynalazki-i-wzory-uzytkowe/wynalazki-i-wzory-uzytkowe-informacje-podstawowe/jak-opatentowac-wynalazek-lub-chronic-wzor-uzytkowy
+  checked_at: '2026-11-21'
+  verified: true
+  after_step: 1
+  step_title: Ustal możliwość i stan ochrony rozwiązania
+  guidance: Sprawdź właściciela praw i stan istniejących zgłoszeń przed ujawnieniem szczegółów. Jeśli ochrony jeszcze nie zgłoszono, porównaj warunki patentu i wzoru użytkowego.
+
+- id: ctt-prz
+  name: Centrum Transferu Technologii Politechniki Rzeszowskiej
+  provider: Politechnika Rzeszowska
+  description: Obsługa własności intelektualnej Politechniki, współpracy z przedsiębiorstwami i komercjalizacji wyników.
+  audience: Zespoły Politechniki Rzeszowskiej oraz przedsiębiorstwa zainteresowane współpracą z PRz.
+  organization_kinds: [uczelnia]
+  innovation_kinds: [technologiczna, procesowa]
+  stages: [prototyp, pilotaz, wdrozona, skalowana]
+  paths: [transfer, komercjalizacja]
+  website_domain: prz.edu.pl
+  url: https://przemysl.prz.edu.pl/o-nas
+  checked_at: '2026-11-21'
+  verified: true
+  after_step: 0
+  step_title: Uzgodnij plan transferu z CTT Politechniki Rzeszowskiej
+  guidance: Zgłoś rezultat do CTT PRz i uzgodnij, kto prowadzi rozmowy o pilotażu, licencji lub współpracy z firmą.
+
+- id: ctt-uczelnia
+  name: Centrum transferu technologii macierzystej uczelni
+  provider: Uczelnia prowadząca CTT
+  description: Komercjalizacja bezpośrednia wyników działalności naukowej lub know-how, m.in. przez udzielenie licencji lub sprzedaż praw (art. 148 ust. 4).
+  audience: Zespoły uczelniane oraz odbiorcy technologii zainteresowani prawami do wyników.
+  organization_kinds: [uczelnia]
+  innovation_kinds: [technologiczna, procesowa]
+  stages: [prototyp, pilotaz, wdrozona, skalowana]
+  paths: [transfer, komercjalizacja]
+  url: https://eli.gov.pl/api/acts/DU/2026/1362/text.pdf#page=58
+  checked_at: '2026-11-21'
+  verified: true
+  after_step: 0
+  step_title: Skontaktuj się z centrum transferu swojej uczelni
+  guidance: Sprawdź, która jednostka uczelni obsługuje transfer. Uzgodnij własność wyników, zakres ich ujawnienia i możliwe formy współpracy z odbiorcą.
+
+- id: innowacja-pedagogiczna
+  name: Innowacja pedagogiczna w szkole
+  provider: Dyrekcja szkoły lub placówki
+  description: Wewnętrzna droga wprowadzenia innowacji programowej, organizacyjnej lub metodycznej w ramach Prawa oświatowego (art. 1 pkt 18).
+  audience: Nauczyciele i dyrekcje szkół lub placówek.
+  organization_kinds: [szkola]
+  innovation_kinds: [edukacyjna, organizacyjna, spoleczna]
+  stages: [pomysl, prototyp, pilotaz, wdrozona, skalowana]
+  paths: [rozwoj, wdrozenie]
+  url: https://kuratorium.krakow.pl/innowacja-pedagogiczna/
+  checked_at: '2026-11-21'
+  verified: true
+  after_step: 2
+  step_title: Uzgodnij zasady realizacji z dyrekcją szkoły
+  guidance: Przekaż dyrekcji cele, zakres zajęć, wymagane zasoby i sposób ewaluacji. Ustal wewnętrzną procedurę oraz to, czy plan podlega zasadom eksperymentu pedagogicznego.
+
+- id: ore-bank
+  name: Bank Dobrych Praktyk ORE
+  provider: Ośrodek Rozwoju Edukacji
+  description: Zbiór przykładów działań szkół i placówek, w tym opisanych innowacji pedagogicznych.
+  audience: Szkoły i placówki szukające wzorców dokumentowania i prowadzenia działań edukacyjnych.
+  organization_kinds: [szkola]
+  innovation_kinds: [edukacyjna, organizacyjna, spoleczna]
+  stages: [pilotaz, wdrozona, skalowana]
+  paths: [wdrozenie]
+  url: https://ore.edu.pl/2015/03/bank-dobrych-praktyk-materialy-do-pobrania/
+  checked_at: '2026-11-21'
+  verified: true
+  after_step: 1
+  step_title: Porównaj pakiet dla szkół z opisami praktyk ORE
+  guidance: Wybierz podobny przykład z banku i sprawdź, czy własny pakiet zawiera scenariusz, wymagane zasoby i sposób oceny efektów.
+
+- id: jst-baza-praktyk
+  name: Baza Dobrych Praktyk samorządów
+  provider: Związek Miast Polskich, Związek Gmin Wiejskich RP i Związek Powiatów Polskich
+  description: Opisy rozwiązań stosowanych przez samorządy w usługach publicznych, rozwoju instytucjonalnym i współpracy.
+  audience: Jednostki samorządu terytorialnego i ich instytucje.
+  organization_kinds: [jst, instytucja_publiczna]
+  innovation_kinds: [organizacyjna, spoleczna, procesowa, edukacyjna]
+  stages: [pilotaz, wdrozona, skalowana]
+  paths: [wdrozenie]
+  url: https://www.miasta.pl/strony/baza-dobrych-praktyk
+  checked_at: '2026-11-21'
+  verified: true
+  after_step: 1
+  step_title: Porównaj opis z praktykami samorządów
+  guidance: Znajdź zbliżony przypadek i sprawdź, czy pakiet dla partnera wyjaśnia koszty, podział ról i wpływ na usługę publiczną.
+
+- id: zmp-empirie
+  name: EMPIRIE – Sieci Wymiany Doświadczeń
+  provider: Związek Miast Polskich
+  description: Tematyczne sieci wymiany praktyk i doświadczeń między samorządami.
+  audience: Miasta zainteresowane współpracą wokół wspólnych wyzwań.
+  organization_kinds: [jst]
+  innovation_kinds: [organizacyjna, spoleczna, procesowa, edukacyjna]
+  stages: [pilotaz, wdrozona, skalowana]
+  paths: [wdrozenie]
+  url: https://www.miasta.pl/strony/sieci-wymiany-doswiadczen
+  checked_at: '2026-11-21'
+  verified: true
+  after_step: 2
+  step_title: Poszukaj kontaktu przez sieci współpracy miast
+  guidance: Dobierz sieć do tematu i zapytaj ZMP o możliwość przedstawienia praktyki miastu, które mierzy się z podobnym problemem.
