@@ -1,39 +1,24 @@
-# Radar Innowacji
+# Wihajster · Radar innowacji
 
-Prototyp na HackNation 2026 (zadanie „Radar innowacji”, Podkarpackie Centrum Innowacji).
+## Jak uruchomić po pobraniu zmian
 
-Platforma, na której innowacje ze szkół, uczelni, samorządów i instytucji publicznych mają swoje profile. Profil powstaje ze zgłoszenia twórcy albo automatycznie, gdy radar wykryje innowację w otwartym źródle. Każda innowacja dostaje ocenę potencjału według jawnych kryteriów, rekomendację dalszej ścieżki, listę podobnych rozwiązań i dopasowanych odbiorców, partnerów lub inwestorów.
-
-## Uruchomienie
-
-Wymagania: Docker, [uv](https://docs.astral.sh/uv/), Node 20+, [Ollama](https://ollama.com).
+W katalogu sklonowanego repozytorium wykonaj:
 
 ```bash
-make install        # zależności backendu i frontu
-ollama pull bge-m3  # model embeddingów
-make db-reset       # Postgres w kontenerze, schemat i dane przykładowe
-make backend        # API na http://127.0.0.1:5000
-make frontend       # aplikacja na http://127.0.0.1:5173 (w drugim terminalu)
-make basal          # serwer modelu decyzyjnego na porcie 8000 (opcjonalny, w trzecim terminalu)
-make test
+git pull
+./start.sh
 ```
 
-Konfiguracja jest w zmiennych środowiskowych, opis w `.env.example`. Bez pliku `.env` działają wartości domyślne.
+Otwórz **[http://127.0.0.1:5173](http://127.0.0.1:5173)**, kiedy w terminalu pojawi się „Wihajster działa”. Pozostaw terminal otwarty. **Ctrl+C** zatrzymuje aplikację. Przy kolejnym starcie dane z PostgreSQL pozostają na miejscu.
 
-## Budowa
+### Pierwsze uruchomienie
 
-| Katalog | Zawartość |
-|---|---|
-| `backend/` | API we Flasku, SQLAlchemy, PostgreSQL z pgvector |
-| `frontend/` | React, TypeScript, Vite, Tailwind |
-| `docker-compose.yml` | baza danych |
+Potrzebujesz Bash, curl, działającego Dockera z Compose, [uv](https://docs.astral.sh/uv/), Node.js 22.12+ z npm oraz [Ollamy](https://ollama.com/download). Pierwszy start wymaga internetu i pobiera zależności oraz dwa modele AI, więc może potrwać kilka minut.
 
-Modele językowe działają lokalnie przez Ollamę, więc treść zgłoszeń nie opuszcza maszyny.
+Skrypt przygotowuje bazę PostgreSQL z pgvector, dane przykładowe i profil „Lena Wrona · demo”, sprawdza modele, uzupełnia brakujące wektory i uruchamia API oraz frontend. Nowa baza zawiera zestaw startowy. Pełny katalog zgromadzony na komputerze demonstracyjnym pochodzi z osobnych importów. Źródła możesz sprawdzić w aplikacji w zakładce **Źródła**.
 
-## Licencja
+### Jeśli masz już uruchomioną aplikację
 
-EUPL-1.2, tekst w pliku `LICENSE`.
+Zakończ poprzednią sesję przez Ctrl+C, zanim ponownie wykonasz `./start.sh`. Domyślne porty to 5173 dla aplikacji, 5000 dla API, 5432 dla PostgreSQL i 11434 dla Ollamy. Konfigurację modeli i połączenia z bazą możesz zmienić w lokalnym pliku `.env` według [.env.example](.env.example). Osobny skalibrowany serwer decyzji można uruchomić przez `make basal` z ustawionym `BASAL_URL=http://127.0.0.1:8000`. Domyślnie decyzje obsługuje Ollama.
 
-### Społecznościowy feed demonstracyjny
-
-Po załadowaniu danych startowych uruchom w katalogu backend polecenie `uv run flask --app app social-demo`. Dodaje tabele obserwacji do istniejącej bazy i zakłada personę „Lena Wrona · demo” z obserwowanymi osobami i organizacjami. Kolejne uruchomienie zachowuje jej aktywność. Wybierz Lenę w nagłówku i otwórz zakładkę „Obserwowani”.
+Licencja projektu: [EUPL-1.2](LICENSE).

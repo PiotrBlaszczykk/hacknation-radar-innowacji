@@ -12,6 +12,16 @@ def register_cli(app: Flask) -> None:
         from .seed.social_demo import install
         click.echo(f"Persona społecznościowa: {install()}")
 
+    @app.cli.command("db-init")
+    def db_init():
+        """Tworzy brakujące tabele i ładuje dane startowe przy pierwszym uruchomieniu."""
+        from .seed import load_seed
+
+        with db.engine.begin() as connection:
+            connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            db.metadata.create_all(connection)
+        click.echo(load_seed())
+
     @app.cli.command("db-reset")
     def db_reset():
         """Kasuje tabele, tworzy schemat od nowa i ładuje dane startowe."""
