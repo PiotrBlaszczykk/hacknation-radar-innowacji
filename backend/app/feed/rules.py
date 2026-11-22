@@ -71,9 +71,9 @@ def explain() -> list[dict]:
     ]
     return [
         {
-            "title": "Dla Ciebie",
+            "title": "Dla Ciebie · rekomendacje z profilu (100%)",
             "lines": [
-                f"{label} — {WEIGHTS['profile'][key]}% z profilu, {WEIGHTS['query'][key]}% z opisu."
+                f"{label} — {WEIGHTS['profile'][key]}%."
                 for key, label in SIGNALS.items()
             ] + [
                 "Uwzględniamy obszary Twoje i Twojej organizacji. Te wybrane przez Ciebie liczą się mocniej.",
@@ -83,6 +83,10 @@ def explain() -> list[dict]:
                 f"i słowa z tytułu oraz opisu ({1 - QUERY_VECTOR_WEIGHT:.0%}).",
                 f"Za datę dodania wpis dostaje o połowę mniej punktów po {FRESHNESS_HALF_LIFE_DAYS} dniach.",
             ],
+        },
+        {
+            "title": "Dla Ciebie · po wpisaniu zapytania (100%)",
+            "lines": [f"{label} — {WEIGHTS['query'][key]}%." for key, label in SIGNALS.items()],
         },
         {
             "title": "Rola i potrzeby twórców",

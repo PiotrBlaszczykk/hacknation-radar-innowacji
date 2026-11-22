@@ -10,7 +10,7 @@ function PersonaSwitcher() {
   if (!persona) return null
 
   return (
-    <div className="col-span-2 flex min-w-0 items-center gap-3 sm:col-span-1 sm:col-start-3 sm:row-start-1 sm:justify-self-end lg:col-start-2">
+    <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-3 sm:col-span-1 sm:col-start-3 sm:row-start-1 sm:justify-self-end lg:col-start-2">
       <label htmlFor="header-persona" className="sr-only">Persona</label>
       <select
         id="header-persona"
@@ -20,8 +20,9 @@ function PersonaSwitcher() {
       >
         {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
       </select>
+      <Link to="/przewodnik" className="text-sm font-semibold underline">Przewodnik</Link>
       <Link to="/profil" className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-sm px-1 text-sm font-semibold text-white hover:underline focus-visible:outline-white">
-        <UserRound className="size-4" aria-hidden="true" /> Profil
+        <UserRound className="size-4" aria-hidden="true" /> <span aria-live="polite">Profil · {persona.name}</span>
       </Link>
     </div>
   )

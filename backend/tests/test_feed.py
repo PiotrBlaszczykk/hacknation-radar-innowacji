@@ -277,7 +277,7 @@ def test_profile_save_is_atomic_if_model_unavailable(client, monkeypatch):
 def test_explain_exposes_ranking_rules(client):
     explain = client.get("/api/feed/explain").get_json()
     titles = {section["title"] for section in explain["sections"]}
-    assert titles >= {"Dla Ciebie", "Popularne", "Ukryte perełki", "Rola i potrzeby twórców"}
+    assert titles >= {"Dla Ciebie · rekomendacje z profilu (100%)", "Dla Ciebie · po wpisaniu zapytania (100%)", "Popularne", "Ukryte perełki", "Rola i potrzeby twórców"}
 
 
 def test_network_demo_reactions_and_privacy(client):

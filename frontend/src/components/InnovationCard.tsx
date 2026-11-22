@@ -1,4 +1,4 @@
-import { Repeat2, ArrowUpRight, Building2, Heart, MessageCircle, Radar } from 'lucide-react'
+import { UserRound, Repeat2, ArrowUpRight, Building2, Heart, MessageCircle, Radar } from 'lucide-react'
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client.ts'
@@ -9,6 +9,14 @@ import { useLabel } from '../api/hooks.ts'
 import type { Innovation } from '../api/types.ts'
 import { usePersona } from '../lib/persona.tsx'
 import { Badge, ErrorNote, cx } from './ui.tsx'
+
+function Avatar({ kind, small = false }: { kind: 'person' | 'organization' | 'radar'; small?: boolean }) {
+  const Icon = kind === 'person' ? UserRound : kind === 'organization' ? Building2 : Radar
+  return <span aria-hidden="true" className={cx('inline-grid shrink-0 place-items-center align-middle', small ? 'size-6' : 'size-10',
+    kind === 'person' ? 'rounded-full bg-violet-100 text-violet-800' : 'rounded-md bg-brand-50 text-brand-700')}>
+    <Icon className={small ? 'size-4' : 'size-5'} />
+  </span>
+}
 
 export function sourceLabel(source: string | null) {
   switch (source) {
@@ -73,7 +81,7 @@ function FeedActions({ id, engagement }: { id: number; engagement: Engagement })
       </div>
       {engagement.comments?.map((c, index) => (
         <p key={index} className="my-2 border-l-2 border-slate-200 pl-3 wrap-anywhere">
-          <strong className="mr-2 text-slate-900">{c.name}</strong>{c.body}
+          <Avatar kind="person" small /> <strong className="mr-2 text-slate-900">{c.name}</strong>{c.body}
         </p>
       ))}
       {engagement.comments_count > 2 && <Link className="underline" to={`/innowacje/${id}#komentarze`}>Wszystkie komentarze ({engagement.comments_count})</Link>}
@@ -121,11 +129,11 @@ export default function InnovationCard({ innovation, showReason = false }: { inn
 
   return (
     <article className="flex min-w-0 flex-col bg-surface px-4 pt-4 pb-3 sm:px-5 sm:pt-5">
-      {innovation.repost_by && <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-600"><Repeat2 className="size-4" /> Repost · {innovation.repost_by}</p>}
+      {innovation.network_activity ? <p className="mb-2 flex items-center gap-2 text-sm">
+        <Avatar kind="person" small />{innovation.network_activity.name} · {{serce: 'Polubienie', podbicie: 'Repost', komentarz: 'Komentarz'}[innovation.network_activity.type]}
+      </p> : innovation.repost_by && <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-600"><Avatar kind="person" small /> Repost · {innovation.repost_by}</p>}
       <header className="flex min-w-0 items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-700" aria-hidden="true">
-          {radar ? <Radar className="size-5" /> : <Building2 className="size-5" />}
-        </span>
+        <Avatar kind={author ? 'person' : org ? 'organization' : 'radar'} />
         <div className="min-w-0 flex-1">
           <p className="line-clamp-2 wrap-anywhere text-[.9375rem] leading-snug font-bold text-slate-900">
             {!author && org ? (

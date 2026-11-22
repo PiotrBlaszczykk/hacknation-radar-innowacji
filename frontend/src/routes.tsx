@@ -1,3 +1,5 @@
+import Guide from './pages/Guide.tsx'
+import RelatedProjects from './components/RelatedProjects.tsx'
 import { Compass, KanbanSquare, Lightbulb, PlusCircle, Radar, Rss, Scale } from 'lucide-react'
 import type { ComponentType, ReactElement } from 'react'
 import Broker from './pages/Broker.tsx'
@@ -23,10 +25,12 @@ export const routes: AppRoute[] = [
   { path: '/sprawdz-pomysl', element: <IdeaCheck />, nav: { label: 'Sprawdź pomysł', icon: Lightbulb } },
   { path: '/zglos', element: <Submit />, nav: { label: 'Zgłoś', icon: PlusCircle } },
   { path: '/zapotrzebowania', element: <Needs />, nav: { label: 'Zapotrzebowania', icon: Compass } },
-  { path: '/broker', element: <Broker />, nav: { label: 'Panel brokera', icon: KanbanSquare } },
+  { path: '/porownania', element: <RelatedProjects /> },
+  { path: '/broker', element: <Broker />, nav: { label: 'Przegląd innowacji', icon: KanbanSquare } },
   { path: '/kryteria', element: <Criteria />, nav: { label: 'Kryteria', icon: Scale } },
   { path: '/zrodla', element: <Sources />, nav: { label: 'Źródła', icon: Rss } },
   { path: '/innowacje/:id', element: <InnovationDetail /> },
   { path: '/organizacje/:id', element: <OrganizationPage /> },
+  { path: '/przewodnik', element: <Guide /> },
   { path: '/profil', element: <Profile /> },
 ]

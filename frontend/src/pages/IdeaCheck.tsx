@@ -25,6 +25,10 @@ export default function IdeaCheck() {
 
       <Card className="p-5 sm:p-7">
         <form onSubmit={submit} className="space-y-4">
+          <button type="button" className="text-sm font-semibold text-brand-700 underline" onClick={() => {
+            setText('Chcemy opracować biodegradowalne opakowania żywności, które wydłużają świeżość produktów i ograniczają ilość odpadów.')
+            check.reset()
+          }}>Wstaw przykład o opakowaniach żywności</button>
           <Field label="Opisz swoją innowację albo pomysł" hint="Napisz, komu chcesz pomóc, jaki problem rozwiązujesz i jak ma działać Twój pomysł.">
             <textarea
               rows={6}

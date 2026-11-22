@@ -84,7 +84,7 @@ PATHS = {
 
 USER_ROLES = {
     "tworca": "Twórca innowacji",
-    "broker": "Broker innowacji",
+    "broker": "Koordynator innowacji",
     "poszukujacy": "Poszukujący rozwiązań",
 }
 

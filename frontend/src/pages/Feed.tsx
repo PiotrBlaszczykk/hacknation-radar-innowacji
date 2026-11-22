@@ -1,3 +1,4 @@
+import RelatedProjects from '../components/RelatedProjects.tsx'
 import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, CircleHelp, Compass, Search, SlidersHorizontal } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -38,15 +39,15 @@ const resultCount = new Intl.NumberFormat('pl-PL')
 
 function FeaturedInnovation({ personaId }: { personaId: number | null }) {
   const { data: innovation } = useInnovation(featuredInnovationId, personaId)
-  if (!innovation?.source_url || !innovation.problem || innovation.status === 'archiwum') return null
+  if (!innovation?.source_url || innovation.status === 'archiwum') return null
 
   const visitCount = innovation.results?.match(/pierwszym półroczu 2026 r\. urzędnik odwiedził (\d+) mieszkańców/i)?.[1]
 
   return (
-    <article className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-surface">
+    <article className="min-w-0 overflow-hidden rounded-b-xl border-t border-slate-200 bg-surface">
       <div className="px-4 py-4 sm:px-5 sm:py-5">
         <h2 className="wrap-anywhere font-display text-[1.85rem] leading-[.98] font-bold text-slate-900 max-[359px]:text-[1.4rem] sm:text-[2rem]">{innovation.title}</h2>
-        <p className="mt-2 hidden max-w-[50ch] text-sm leading-snug text-slate-600 sm:block">{innovation.problem}</p>
+        <p className="mt-2 max-w-[50ch] text-sm leading-snug text-slate-600">{innovation.summary || innovation.problem}</p>
         {visitCount && (
           <dl className="mt-4 flex items-center gap-3 border-t border-slate-200 pt-3">
             <dt className="order-2 text-sm font-semibold leading-tight text-slate-800">
@@ -60,7 +61,7 @@ function FeaturedInnovation({ personaId }: { personaId: number | null }) {
       <div className="flex flex-wrap items-center justify-between gap-x-3 border-t border-slate-200 bg-slate-50 px-4 sm:px-5">
         <a href={innovation.source_url} target="_blank" rel="noreferrer"
           className="inline-flex min-h-11 items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 hover:underline">
-          {innovation.organization?.name ?? sourceLabel(innovation.source_name) ?? 'Źródło'}
+          Źródło danych · {innovation.organization?.name ?? sourceLabel(innovation.source_name) ?? 'Publikacja źródłowa'}
           <ArrowUpRight className="size-3.5 shrink-0" aria-hidden="true" />
         </a>
         <Link to={`/innowacje/${innovation.id}`}
@@ -130,10 +131,18 @@ export default function Feed() {
         </div>
       </form>
       <aside
-        className={cx('min-w-0 space-y-1 sm:space-y-3 lg:sticky lg:top-36 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start', showingGems && 'hidden lg:block')}
-        aria-label={showingGems ? 'Zapotrzebowania' : 'Wdrożenie i zapotrzebowania'}
+        className={cx('min-w-0 space-y-1 sm:space-y-3 lg:sticky lg:top-36 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start')}
+        aria-label="Porównania i zapotrzebowania"
       >
-        {!showingGems && <FeaturedInnovation personaId={personaId} />}
+        {!search && !activeFilters && <RelatedProjects preview />}
+        {tab === 'dla_ciebie' && !search && !activeFilters && (
+          <details className="rounded-xl border border-slate-200 bg-surface">
+            <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-brand-700">
+              Zobacz przykład wdrożenia znalezionego przez radar
+            </summary>
+            <FeaturedInnovation personaId={personaId} />
+          </details>
+        )}
         <Link to="/zapotrzebowania"
           className="hidden min-h-11 items-center gap-2.5 rounded-sm px-1 text-sm font-semibold text-slate-700 hover:text-brand-700 hover:underline min-[360px]:flex">
           <Compass className="size-4 text-brand-700" aria-hidden="true" />

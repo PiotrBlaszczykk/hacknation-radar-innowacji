@@ -54,7 +54,7 @@ def get_feed():
         vector = user.embedding
 
     result = ranking.feed_page(tab, filters, user, vector, query, limit, offset)
-    network.decorate(result["items"], user.id if user else None)
+    network.decorate(result["items"], user.id if user else None, following=tab == "obserwowani")
     if tab == "perelki" and result["total"] == 0:
         result["message"] = rules.GEM_EMPTY_IN_SCOPE if len(filters) > 1 else rules.GEM_EMPTY
     if notice:

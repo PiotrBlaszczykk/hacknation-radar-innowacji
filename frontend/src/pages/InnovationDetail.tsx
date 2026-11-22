@@ -1,3 +1,4 @@
+import StageGuide from '../components/StageGuide.tsx'
 import { ArrowLeft, ArrowUpRight } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
@@ -114,6 +115,7 @@ export default function InnovationDetail() {
             {innovation.kind && <Badge tone="brand">{label('innovation_kinds', innovation.kind)}</Badge>}
             {innovation.stage && <Badge tone="green">{label('stages', innovation.stage)}</Badge>}
           </div>
+          <StageGuide />
           <h1 className="page-title mt-3 max-sm:text-[2.625rem] sm:mt-4">{innovation.title}</h1>
           {innovation.summary && <p className="mt-3 max-w-[68ch] wrap-anywhere text-base leading-relaxed text-slate-600 sm:text-lg">{innovation.summary}</p>}
         </div>

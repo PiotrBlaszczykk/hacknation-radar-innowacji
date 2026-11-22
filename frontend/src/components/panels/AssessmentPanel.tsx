@@ -94,8 +94,8 @@ export default function AssessmentPanel({ innovation }: { innovation: Innovation
             {assessment.has_score && !assessment.ranked && <Badge tone="amber">Wynik wstępny · poza rankingiem</Badge>}
             <span className="text-sm text-slate-600">
               {assessment.scored_weight < 100 ? `Dane pokrywają ${assessment.scored_weight}% wag kryteriów`
-                : assessment.needs_review ? 'Ocena wymaga sprawdzenia przez brokera'
-                  : assessment.confidence == null ? 'Ocena sprawdzona przez brokera' : 'Model rozstrzygnął z wystarczającą pewnością'}
+                : assessment.needs_review ? 'Ocena wymaga sprawdzenia przez koordynatora'
+                  : assessment.confidence == null ? 'Ocena sprawdzona przez koordynatora' : 'Model rozstrzygnął z wystarczającą pewnością'}
             </span>
           </div>
           <ul className="mt-3 divide-y divide-slate-200">

@@ -1,12 +1,14 @@
+import StageGuide from '../components/StageGuide.tsx'
+import RelatedProjects from '../components/RelatedProjects.tsx'
 import { ArrowRight, ArrowUpRight } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  useBrokerBoard, useBrokerDuplicates, useBrokerQueue, useBrokerSummary, useMoveInnovation,
+  useBrokerBoard, useBrokerQueue, useBrokerSummary, useMoveInnovation,
   type BrokerColumn, type QueueItem,
 } from '../api/broker.ts'
 import { useLabel, useMeta } from '../api/hooks.ts'
-import { Badge, Button, Card, ErrorNote, inputClass, Loading } from '../components/ui.tsx'
+import { Badge, Button, ErrorNote, inputClass, Loading } from '../components/ui.tsx'
 import { usePersona } from '../lib/persona.tsx'
 
 const number = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 1 })
@@ -35,10 +37,6 @@ function Overview() {
   const tiles = [
     { name: 'Wykryte przez radar', count: origins.radar },
     { name: 'Zgłoszone', count: origins.zgloszenie },
-    { name: 'Ocenione', count: statuses.oceniona },
-    { name: 'Skierowane na ścieżkę', count: statuses.skierowana },
-    { name: 'W kontakcie', count: statuses.w_kontakcie },
-    { name: 'Wdrażane', count: statuses.wdrazana },
   ]
   const colors = ['bg-slate-400', 'bg-sky-400', 'bg-brand-500', 'bg-violet-400', 'bg-amber-200', 'bg-emerald-400']
   const stages = (meta?.statuses ?? []).filter(({ key }) => key !== 'archiwum')
@@ -46,7 +44,7 @@ function Overview() {
 
   return (
     <section aria-label="Podsumowanie przepływu" className="border-y border-slate-200">
-      <dl className="grid grid-cols-2 gap-px bg-slate-200 min-[360px]:grid-cols-3 lg:grid-cols-6">
+      <dl className="grid grid-cols-2 gap-px bg-slate-200 ">
         {tiles.map(({ name, count }) => (
           <div key={name} className="flex min-w-0 flex-col gap-1.5 bg-surface px-3 py-2.5 sm:px-4 sm:py-3">
             <dt className="text-sm leading-tight text-slate-600">{name}</dt>
@@ -56,9 +54,10 @@ function Overview() {
       </dl>
       <div className="space-y-2 border-t border-slate-200 py-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-sm font-semibold text-slate-900">Bieżące etapy przepływu</h2>
+          <h2 className="text-sm font-semibold text-slate-900">Etapy aktywnych innowacji</h2>
           <p className="text-xs text-slate-600">Aktywne innowacje · {number.format(active)}</p>
         </div>
+        <StageGuide />
         {active > 0 && (
           <div aria-hidden="true" className="flex h-2.5 overflow-hidden rounded-full bg-slate-100">
             {stages.map(({ key }, index) => (
@@ -139,13 +138,13 @@ function Board() {
     <section id="tablica" aria-labelledby="board-title" className="min-w-0 scroll-mt-4 space-y-3 lg:scroll-mt-28">
       <div>
         <h2 id="board-title" className="section-title">Tablica innowacji</h2>
-        {!canMove && <p className="mt-1 text-sm text-slate-600">Status innowacji może zmienić osoba z rolą brokera.</p>}
+        {!canMove && <p className="mt-1 text-sm text-slate-600">Status innowacji może zmienić koordynator innowacji.</p>}
       </div>
       {isPending && <Loading label="Ładowanie tablicy…" />}
       {error && <ErrorNote error={error} />}
       {data && (
         <div aria-label="Kolumny etapów" role="region" tabIndex={0}
-          className="grid auto-cols-[minmax(9.5rem,1fr)] grid-flow-col items-start gap-2 overflow-x-auto pb-2">
+          className="grid auto-cols-[minmax(14rem,1fr)] grid-flow-col items-start gap-2 overflow-x-auto pb-2">
           {data.columns.map((column) => {
             // Wykrycie i zgłoszenie to równoległe początki tego samego przepływu.
             const next = column.status === 'wykryta' ? 'oceniona' : statuses[statuses.indexOf(column.status) + 1]
@@ -190,7 +189,7 @@ function DecisionQueue() {
 
   return (
     <section id="kolejka" aria-labelledby="queue-title" className="min-w-0 scroll-mt-4 space-y-3 lg:scroll-mt-28">
-      <h2 id="queue-title" tabIndex={-1} className="section-title">Kolejka decyzji</h2>
+      <h2 id="queue-title" tabIndex={-1} className="section-title">Sprawy do rozpatrzenia</h2>
       <div>
         <label htmlFor="queue-type" className="block text-sm font-medium text-slate-700">Rodzaj sprawy</label>
         <select id="queue-type" value={selected ?? ''} className={`${inputClass} mt-1`}
@@ -320,58 +319,26 @@ function Metrics() {
   )
 }
 
-function Duplicates() {
-  const { data, error } = useBrokerDuplicates()
-  if (!data && !error) return null
-
-  return (
-    <section aria-labelledby="duplicates-title" className="space-y-3">
-      <h2 id="duplicates-title" className="section-title">
-        Te same problemy rozwiązywane w kilku miejscach
-      </h2>
-      {error && <ErrorNote error={error} />}
-      {data && (
-        <Card className="divide-y divide-slate-100">
-          {data.items.length === 0 && <p className="p-5 text-sm text-slate-600">Brak zapisanych par podobnych innowacji.</p>}
-          {data.items.map(({ left, right, relation }) => (
-            <div key={`${left.id}-${right.id}`} className="space-y-2 p-4">
-              <Badge tone="violet">{relation === 'to_samo' ? 'To samo rozwiązanie' : 'Ten sam problem'}</Badge>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {[left, right].map((innovation) => (
-                  <div key={innovation.id}>
-                    <Link className={`${titleLink} text-sm`} to={`/innowacje/${innovation.id}`}>{innovation.title}</Link>
-                    <p className="text-xs text-slate-600">{innovation.organization?.name ?? 'Organizacja nieznana'}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </Card>
-      )}
-    </section>
-  )
-}
-
 export default function Broker() {
   return (
     <div className="min-w-0 space-y-7">
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
-          <h1 className="page-title">Panel brokera</h1>
-          <p className="mt-2 text-slate-600">Śledź innowacje od wykrycia i zgłoszenia po kontakt z partnerem i wdrożenie.</p>
+          <h1 className="page-title">Przegląd innowacji</h1>
+          <p className="mt-2 text-slate-600">Koordynator sprawdza oceny, wybiera dalsze kroki i aktualizuje etap pracy nad innowacją.</p>
         </div>
-        <nav aria-label="Sekcje panelu brokera" className="flex flex-wrap gap-x-4 text-sm font-semibold text-brand-700">
+        <nav aria-label="Sekcje przeglądu innowacji" className="flex flex-wrap gap-x-4 text-sm font-semibold text-brand-700">
           <a href="#kolejka" className="py-1 hover:underline">Przejdź do kolejki</a>
           <a href="#tablica" className="py-1 hover:underline">Przejdź do tablicy</a>
         </nav>
       </header>
       <Overview />
-      <div className="grid gap-6 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)]">
+      <div className="space-y-8">
         <DecisionQueue />
         <Board />
       </div>
       <Metrics />
-      <Duplicates />
+      <RelatedProjects />
     </div>
   )
 }
